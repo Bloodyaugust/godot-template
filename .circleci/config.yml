@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: greysonr/godot_butler:0.0.3
+
+    steps:
+      - checkout
+
+      - run:
+          name: build_and_deploy
+          command: |
+            ls -al
+            chmod +x ./tools/build-and-deploy.sh
+            ./tools/build-and-deploy.sh

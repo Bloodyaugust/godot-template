@@ -1,0 +1,110 @@
+[gd_resource type="VisualShader" load_steps=10 format=2]
+
+[sub_resource type="VisualShaderNodeScalarConstant" id=1]
+constant = 150.0
+
+[sub_resource type="VisualShaderNodeScalarOp" id=2]
+operator = 2
+
+[sub_resource type="VisualShaderNodeVectorOp" id=3]
+operator = 2
+
+[sub_resource type="VisualShaderNodeScalarUniform" id=4]
+uniform_name = "shake"
+
+[sub_resource type="VisualShaderNodeInput" id=5]
+input_name = "vertex"
+
+[sub_resource type="VisualShaderNodeInput" id=6]
+input_name = "time"
+
+[sub_resource type="VisualShaderNodeScalarFunc" id=7]
+function = 0
+
+[sub_resource type="VisualShaderNodeVectorCompose" id=8]
+
+[sub_resource type="VisualShaderNodeVectorOp" id=9]
+
+[resource]
+code = "shader_type canvas_item;
+uniform float shake;
+
+
+
+void vertex() {
+// Input:2
+	vec3 n_out2p0;
+	n_out2p0 = vec3(VERTEX,0.0);
+
+// Input:3
+	float n_out3p0;
+	n_out3p0 = TIME;
+
+// Scalar:13
+	float n_out13p0;
+	n_out13p0 = 150.000000;
+
+// ScalarOp:14
+	float n_out14p0;
+	n_out14p0 = n_out3p0 * n_out13p0;
+
+// ScalarFunc:4
+	float n_out4p0;
+	n_out4p0 = sin(n_out14p0);
+
+// VectorCompose:8
+	float n_in8p1 = 0.00000;
+	float n_in8p2 = 0.00000;
+	vec3 n_out8p0;
+	n_out8p0 = vec3( n_out4p0 , n_in8p1 , n_in8p2 );
+
+// ScalarUniform:16
+	float n_out16p0;
+	n_out16p0 = shake;
+
+// VectorOp:15
+	vec3 n_out15p0;
+	n_out15p0 = n_out8p0 * vec3(n_out16p0);
+
+// VectorOp:9
+	vec3 n_out9p0;
+	n_out9p0 = n_out2p0 + n_out15p0;
+
+// Output:0
+	VERTEX = n_out9p0.xy;
+
+}
+
+void fragment() {
+// Output:0
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( -509, -46 )
+mode = 1
+flags/light_only = false
+nodes/vertex/0/position = Vector2( 1060, 120 )
+nodes/vertex/2/node = SubResource( 5 )
+nodes/vertex/2/position = Vector2( -20, 160 )
+nodes/vertex/3/node = SubResource( 6 )
+nodes/vertex/3/position = Vector2( -20, 220 )
+nodes/vertex/4/node = SubResource( 7 )
+nodes/vertex/4/position = Vector2( 200, 360 )
+nodes/vertex/8/node = SubResource( 8 )
+nodes/vertex/8/position = Vector2( 440, 240 )
+nodes/vertex/9/node = SubResource( 9 )
+nodes/vertex/9/position = Vector2( 880, 120 )
+nodes/vertex/13/node = SubResource( 1 )
+nodes/vertex/13/position = Vector2( -60, 360 )
+nodes/vertex/14/node = SubResource( 2 )
+nodes/vertex/14/position = Vector2( 120, 240 )
+nodes/vertex/15/node = SubResource( 3 )
+nodes/vertex/15/position = Vector2( 660, 200 )
+nodes/vertex/16/node = SubResource( 4 )
+nodes/vertex/16/position = Vector2( 640, 380 )
+nodes/vertex/connections = PoolIntArray( 2, 0, 9, 0, 9, 0, 0, 0, 3, 0, 14, 0, 13, 0, 14, 1, 14, 0, 4, 0, 4, 0, 8, 0, 8, 0, 15, 0, 16, 0, 15, 1, 15, 0, 9, 1 )

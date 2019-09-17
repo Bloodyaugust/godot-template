@@ -1,0 +1,60 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://resources/fonts/Fonts/Kenney Pixel Square.ttf" type="DynamicFontData" id=1]
+[ext_resource path="res://resources/fonts/Fonts/Kenney Blocks.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://resources/fonts/Fonts/Kenney Pixel.ttf" type="DynamicFontData" id=3]
+
+[sub_resource type="GDScript" id=22]
+script/source = "extends Node2D
+
+const FLOAT_SPEED: float = 7.5
+
+export var time_to_live: float
+
+onready var text = get_node(\"text\")
+onready var color:Color = text_color if text_color != null else text.get(\"custom_colors/font_color\")
+onready var outline_color: Color = text.get(\"custom_colors/font_outline_modulate\")
+onready var starting_x: float = position.x
+onready var time_left: float = time_to_live
+
+var text_color: Color
+
+func _process(delta):
+  time_left -= delta
+  
+  if time_left <= 0:
+    queue_free()
+  else:
+    position = Vector2(starting_x + sin(OS.get_ticks_msec() / 100), position.y - FLOAT_SPEED * delta)
+    color.a = time_left / time_to_live
+    outline_color.a = time_left / time_to_live
+    text.set(\"custom_colors/font_color\", color)
+    text.set(\"custom_colors/font_outline_modulate\", outline_color)
+
+func _ready():
+  if text_color != null:
+    text.set(\"custom_colors/font_color\", text_color)"
+
+[sub_resource type="DynamicFont" id=23]
+outline_size = 1
+font_data = ExtResource( 3 )
+fallback/0 = ExtResource( 1 )
+fallback/1 = ExtResource( 2 )
+
+[node name="floating_text" type="Node2D"]
+position = Vector2( -0.865917, -71.4421 )
+z_index = 10
+script = SubResource( 22 )
+time_to_live = 5.0
+
+[node name="text" type="Label" parent="."]
+margin_left = -20.0
+margin_top = -7.0
+margin_right = 20.0
+margin_bottom = 6.99999
+custom_fonts/font = SubResource( 23 )
+custom_colors/font_color = Color( 0.843137, 0.745098, 0.0941176, 0.00776567 )
+custom_colors/font_outline_modulate = Color( 0, 0, 0, 0.00776567 )
+text = "+1"
+align = 1
+valign = 1

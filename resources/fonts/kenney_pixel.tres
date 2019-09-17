@@ -1,0 +1,11 @@
+[gd_resource type="DynamicFont" load_steps=4 format=2]
+
+[ext_resource path="res://resources/fonts/Fonts/Kenney Pixel Square.ttf" type="DynamicFontData" id=1]
+[ext_resource path="res://resources/fonts/Fonts/Kenney Blocks.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://resources/fonts/Fonts/Kenney Pixel.ttf" type="DynamicFontData" id=3]
+
+[resource]
+size = 32
+font_data = ExtResource( 3 )
+fallback/0 = ExtResource( 1 )
+fallback/1 = ExtResource( 2 )
