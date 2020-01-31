@@ -1,0 +1,35 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "Node",
+"class": "LevelLoader",
+"language": "GDScript",
+"path": "res://scripts/classes/LevelLoader.gd"
+} ]
+_global_script_class_icons={
+"LevelLoader": ""
+}
+
+[application]
+
+config/name="New Game Project"
+config/icon="res://icon.png"
+
+[autoload]
+
+store="*res://lib/redux/store.gd"
+action_types="*res://lib/redux/action_types.gd"
+actions="*res://lib/redux/actions.gd"
+reducers="*res://lib/redux/reducers.gd"
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"
