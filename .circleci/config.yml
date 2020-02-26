@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: greysonr/godot_butler:0.0.3
+      - image: greysonr/godot_butler:0.0.5
 
     steps:
       - checkout
