@@ -29,8 +29,13 @@ echo "-----------------------------"
 
 echo "CHANGING FILETYPE AND CHMOD EXECUTABLE FOR OSX"
 echo "-----------------------------"
-chmod +x build/osx/godot-template.dmg/Contents/MacOS/godot-template
-mv build/osx/godot-template.dmg build/osx/godot-template-osx-alpha.zip
+cd build/osx/
+mv godot-template.dmg godot-template-osx-alpha.zip
+unzip godot-template-osx-alpha.zip
+rm godot-template-osx-alpha.zip
+chmod +x godot-template.app/Contents/MacOS/godot-template
+zip godot-template-osx-alpha.zip godot-template.app
+cd ../../
 
 ls -al
 ls -al build/
