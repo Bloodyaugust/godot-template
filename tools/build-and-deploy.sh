@@ -35,7 +35,7 @@ unzip godot-template-osx-alpha.zip
 rm godot-template-osx-alpha.zip
 chmod +x godot-template.app/Contents/MacOS/godot-template
 zip godot-template-osx-alpha.zip godot-template.app
-rm godot-template.app
+rm -rf godot-template.app
 cd ../../
 
 ls -al
