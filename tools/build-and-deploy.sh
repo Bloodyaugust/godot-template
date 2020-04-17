@@ -27,8 +27,9 @@ echo "-----------------------------"
 godot --export "Windows Desktop" build/win/godot-template.exe -v
 echo "-----------------------------"
 
-echo "CHANGING FILETYPE FOR OSX"
+echo "CHANGING FILETYPE AND CHMOD EXECUTABLE FOR OSX"
 echo "-----------------------------"
+chmod +x build/osx/godot-template.dmg/Contents/MacOS/godot-template
 mv build/osx/godot-template.dmg build/osx/godot-template-osx-alpha.zip
 
 ls -al
