@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gzip \
     wget \
     unzip \
+    zip \
     python \
     python-openssl \
     && rm -rf /var/lib/apt/lists/*
