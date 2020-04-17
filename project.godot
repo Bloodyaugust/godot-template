@@ -20,15 +20,19 @@ _global_script_class_icons={
 
 [application]
 
-config/name="New Game Project"
+config/name="Godot Template Project"
+run/main_scene="res://scenes/main.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
+Functional="*res://lib/util/Functional.gd"
+GDUtil="*res://lib/util/GDUtil.gd"
 store="*res://lib/redux/store.gd"
 action_types="*res://lib/redux/action_types.gd"
 actions="*res://lib/redux/actions.gd"
 reducers="*res://lib/redux/reducers.gd"
+DataController="*res://scripts/controllers/DataController.gd"
 
 [rendering]
 
