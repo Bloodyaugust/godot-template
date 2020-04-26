@@ -9,12 +9,18 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Node2D",
+"class": "FloatingText",
+"language": "GDScript",
+"path": "res://scripts/classes/FloatingText.gd"
+}, {
 "base": "Node",
 "class": "LevelLoader",
 "language": "GDScript",
 "path": "res://scripts/classes/LevelLoader.gd"
 } ]
 _global_script_class_icons={
+"FloatingText": "",
 "LevelLoader": ""
 }
 

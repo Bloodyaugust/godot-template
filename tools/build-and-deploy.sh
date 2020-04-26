@@ -44,6 +44,20 @@ ls -al build/linux/
 ls -al build/osx/
 ls -al build/win/
 
+echo "ZIPPING FOR WINDOZE"
+echo "-----------------------------"
+cd build/win/
+zip -r godot-template-win-alpha.zip godot-template.exe godot-template.pck
+rm -r godot-template.exe godot-template.pck
+cd ../../
+
+echo "ZIPPING FOR LINUX"
+echo "-----------------------------"
+cd build/linux/
+zip -r godot-template-linux-alpha.zip godot-template.x86_64 godot-template.pck
+rm -r godot-template.x86_64 godot-template.pck
+cd ../../
+
 echo "Logging in to Butler"
 echo "-----------------------------"
 butler login

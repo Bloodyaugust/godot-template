@@ -1,57 +1,40 @@
 extends Node
 
-onready var types = get_node('/root/action_types')
+signal ui_click
 
-signal player_damaged
-signal player_tile_changed
-
-func game_set_start_time(time):
+func game_set_start_time(time)->Dictionary:
   return {
-    'type': types.GAME_SET_START_TIME,
-    'time': time
+    "type": action_types.GAME_SET_START_TIME,
+    "time": time
   }
 
-func player_damage(amount):
+func player_damage(amount)->Dictionary:
   emit_signal("player_damaged")
   return {
-    'type': types.PLAYER_DAMAGE,
-    'damage': amount
+    "type": action_types.PLAYER_DAMAGE,
+    "damage": amount
   }
   
-func player_set_food(food):
+func player_set_food(food)->Dictionary:
   return {
-    'type': types.PLAYER_SET_FOOD,
-    'food': food
+    "type": action_types.PLAYER_SET_FOOD,
+    "food": food
   }
   
-func player_set_gold(gold):
+func player_set_gold(gold)->Dictionary:
   return {
-    'type': types.PLAYER_SET_GOLD,
-    'gold': gold
+    "type": action_types.PLAYER_SET_GOLD,
+    "gold": gold
   }
   
-func player_set_health(health):
+func player_set_health(health)->Dictionary:
   return {
-    'type': types.PLAYER_SET_HEALTH,
-    'health': health
+    "type": action_types.PLAYER_SET_HEALTH,
+    "health": health
   }
   
-func player_set_state(state):
+func player_set_state(state)->Dictionary:
   return {
-    'type': types.PLAYER_SET_STATE,
-    'state': state
-  }
-  
-func player_set_tile(tile):
-  emit_signal("player_tile_changed")
-  return {
-    'type': types.PLAYER_SET_TILE,
-    'tile': tile
-  }
-  
-func tiles_set_child(tile, child):
-  return {
-    'type': types.TILES_SET_CHILD,
-    'child': child,
-    'tile': tile
+    "type": action_types.PLAYER_SET_STATE,
+    "state": state
   }
