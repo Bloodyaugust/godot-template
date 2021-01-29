@@ -1,0 +1,400 @@
+{
+	"sheets": [
+		{
+			"name": "asteroids",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "type",
+					"display": null
+				},
+				{
+					"typeStr": "1",
+					"name": "resource",
+					"display": null
+				},
+				{
+					"typeStr": "16",
+					"name": "resourceRange"
+				},
+				{
+					"typeStr": "11",
+					"name": "color",
+					"display": null
+				},
+				{
+					"typeStr": "1",
+					"name": "colorHex"
+				},
+				{
+					"typeStr": "4",
+					"name": "weight"
+				}
+			],
+			"lines": [
+				{
+					"type": "metallic",
+					"resource": "metals",
+					"resourceRange": [
+						5,
+						20
+					],
+					"color": 13522696,
+					"colorHex": "#ce5708",
+					"weight": 10
+				},
+				{
+					"type": "ice",
+					"resource": "volatiles",
+					"color": 8634102,
+					"resourceRange": [
+						10,
+						100
+					],
+					"colorHex": "#83bef6",
+					"weight": 15
+				},
+				{
+					"type": "carbonaceous",
+					"resource": "carbon",
+					"color": 6380122,
+					"resourceRange": [
+						15,
+						25
+					],
+					"colorHex": "#615a5a",
+					"weight": 50
+				},
+				{
+					"type": "silicate",
+					"resource": "silicates",
+					"color": 13417917,
+					"resourceRange": [
+						30,
+						50
+					],
+					"colorHex": "#ccbdbd",
+					"weight": 25
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "drones",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "type",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "speed",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "health",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "workSpeed",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "range",
+					"display": null
+				},
+				{
+					"typeStr": "8",
+					"name": "weapons",
+					"display": null
+				}
+			],
+			"lines": [
+				{
+					"type": "mining",
+					"speed": 150,
+					"health": 5,
+					"workSpeed": 0.3,
+					"range": 5000,
+					"weapons": []
+				},
+				{
+					"type": "laser",
+					"speed": 200,
+					"health": 5,
+					"workSpeed": 0,
+					"range": 1500,
+					"weapons": [
+						{
+							"weapon": "laser"
+						}
+					]
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "weapons",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "type",
+					"display": null
+				},
+				{
+					"typeStr": "2",
+					"name": "beam",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "damage",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "reload",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "cooling"
+				},
+				{
+					"typeStr": "4",
+					"name": "heat",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "heatCapacity",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "clip",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "delay",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "sustain",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "range",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "size",
+					"display": null
+				}
+			],
+			"lines": [
+				{
+					"type": "laser",
+					"reload": 0.25,
+					"clip": 3,
+					"range": 10000,
+					"cooling": 0.95,
+					"heatCapacity": 0.5,
+					"beam": true,
+					"heat": 0.45,
+					"damage": 0.5,
+					"size": 2,
+					"sustain": 0.25,
+					"delay": 0.05
+				},
+				{
+					"type": "platform_laser",
+					"beam": true,
+					"damage": 4,
+					"reload": 1.2,
+					"cooling": 1.5,
+					"heat": 3,
+					"heatCapacity": 5,
+					"clip": 6,
+					"range": 50000,
+					"size": 5,
+					"sustain": 0.5,
+					"delay": 0.15
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "drones@weapons",
+			"props": {
+				"hide": true
+			},
+			"separators": [],
+			"lines": [],
+			"columns": [
+				{
+					"typeStr": "6:weapons",
+					"name": "weapon",
+					"display": null
+				}
+			]
+		},
+		{
+			"name": "platforms",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "type",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "health",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "speed",
+					"display": null
+				},
+				{
+					"typeStr": "8",
+					"name": "weapons",
+					"display": null
+				}
+			],
+			"lines": [
+				{
+					"type": "laser_defense",
+					"health": 15,
+					"speed": 25,
+					"weapons": [
+						{
+							"weapon": "platform_laser"
+						}
+					]
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "platforms@weapons",
+			"props": {
+				"hide": true
+			},
+			"separators": [],
+			"lines": [],
+			"columns": [
+				{
+					"typeStr": "6:weapons",
+					"name": "weapon",
+					"display": null
+				}
+			]
+		},
+		{
+			"name": "ships",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "type",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "health",
+					"display": null
+				},
+				{
+					"typeStr": "4",
+					"name": "speed",
+					"display": null
+				},
+				{
+					"typeStr": "8",
+					"name": "weapons",
+					"display": null
+				},
+				{
+					"typeStr": "2",
+					"name": "tacticalMove",
+					"display": null
+				}
+			],
+			"lines": [
+				{
+					"type": "mothership",
+					"health": 50,
+					"speed": 35,
+					"weapons": [
+						{
+							"weapon": "laser",
+							"position": [
+								25,
+								20
+							]
+						},
+						{
+							"weapon": "laser",
+							"position": [
+								25,
+								80
+							]
+						},
+						{
+							"weapon": "laser",
+							"position": [
+								230,
+								20
+							]
+						},
+						{
+							"weapon": "laser",
+							"position": [
+								230,
+								80
+							]
+						}
+					],
+					"tacticalMove": false
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "ships@weapons",
+			"props": {
+				"hide": true
+			},
+			"separators": [],
+			"lines": [],
+			"columns": [
+				{
+					"typeStr": "6:weapons",
+					"name": "weapon",
+					"display": null
+				},
+				{
+					"typeStr": "16",
+					"name": "position",
+					"display": null
+				}
+			]
+		}
+	],
+	"customTypes": [],
+	"compress": false
+}

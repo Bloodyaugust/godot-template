@@ -32,17 +32,20 @@ config/icon="res://icon.png"
 
 [autoload]
 
+Castledb="*res://singletons/castledb.gd"
+Store="*res://singletons/store.gd"
 Functional="*res://lib/util/Functional.gd"
 GDUtil="*res://lib/util/GDUtil.gd"
-store="*res://lib/redux/store.gd"
-action_types="*res://lib/redux/action_types.gd"
-actions="*res://lib/redux/actions.gd"
-reducers="*res://lib/redux/reducers.gd"
-DataController="*res://scripts/controllers/DataController.gd"
+ClientConstants="*res://constants/client_constants.gd"
+GameConstants="*res://constants/game_constants.gd"
 
 [display]
 
 window/stretch/mode="2d"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "godot-quick-find" )
 
 [rendering]
 
