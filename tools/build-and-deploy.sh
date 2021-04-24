@@ -6,7 +6,7 @@ which butler
 
 echo "Checking application versions..."
 echo "-----------------------------"
-cat ~/.local/share/godot/templates/3.2.stable/version.txt
+cat ~/.local/share/godot/templates/3.3.stable/version.txt
 godot --version
 butler -V
 echo "-----------------------------"

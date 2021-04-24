@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://lib/better_cam.gd" type="Script" id=1]
+
+[sub_resource type="Curve" id=1]
+_data = [ Vector2( 0, 0 ), 0.0, 0.0, 0, 0, Vector2( 1, 1 ), 1.4, 0.0, 0, 0 ]
+
+[node name="BetterCam" type="Camera2D"]
+current = true
+script = ExtResource( 1 )
+camera_follow_speed = 100.0
+camera_target_speed = 100.0
+camera_zoom_speed = 0.05
+key_movement = true
+follow_curve = SubResource( 1 )
+follow_delta = 0.25
+mouse_drag = true
+zoom_follow_scalar = 0.25
+zoom_min = 1.0
+zoom_max = 15.0
