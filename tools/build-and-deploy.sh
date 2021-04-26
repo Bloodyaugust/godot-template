@@ -19,9 +19,9 @@ mkdir build/win/
 echo "EXPORTING FOR LINUX"
 echo "-----------------------------"
 godot --export "Linux/X11" build/linux/godot-template.x86_64 -v
-echo "EXPORTING FOR OSX"
-echo "-----------------------------"
-godot --export "Mac OSX" build/osx/godot-template.dmg -v
+# echo "EXPORTING FOR OSX"
+# echo "-----------------------------"
+# godot --export "Mac OSX" build/osx/godot-template.dmg -v
 echo "EXPORTING FOR WINDOZE"
 echo "-----------------------------"
 godot --export "Windows Desktop" build/win/godot-template.exe -v
@@ -65,5 +65,5 @@ butler login
 echo "Pushing builds with Butler"
 echo "-----------------------------"
 butler push build/linux/ synsugarstudio/godot-template:linux-alpha
-butler push build/osx/ synsugarstudio/godot-template:osx-alpha
+# butler push build/osx/ synsugarstudio/godot-template:osx-alpha
 butler push build/win/ synsugarstudio/godot-template:win-alpha
