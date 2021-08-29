@@ -18,13 +18,13 @@ Packed scenes for gameplay objects that need to be manually placed or (usually) 
 
 Godot editor addon scripts.
 
-### Behaviors
+### Autoloads
 
-Packed scenes for game objects that implement a generic interface. Usually single-node as a carrier for a script.
+Like controllers, but autoloaded and marked as singletons in the project menu of the editor.
 
 ### Build
 
-This is where builds of your game go. In CI, we create subfolders for win, osx, and linux.
+This is where builds of your game go. In CI, we create subfolders for win, osx, linux, and html5.
 
 ### Constants
 
@@ -36,7 +36,7 @@ Contains JSON, YAML, and other file-as-database files. Ships with a CastleDB JSO
 
 ### Doodads
 
-Packed scenes for game objects that implement no behavior or very minimal, non-player-interactive behavior.
+Packed scenes and scripts for game objects that implement no behavior or very minimal, non-player-interactive behavior.
 
 ### Lib
 
@@ -69,10 +69,6 @@ These scripts are for those one-off bits of functionality like tracking state fo
 ### Shaders
 
 Yupp.
-
-### Singletons
-
-Like controllers, but autoloaded and marked as singletons in the project menu of the editor.
 
 ### Sprites
 

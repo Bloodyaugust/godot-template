@@ -1,5 +1,4 @@
 extends Node2D
-class_name FloatingText
 
 export var float_speed: float
 export var float_margin: float

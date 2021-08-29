@@ -9,19 +9,13 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Node2D",
-"class": "FloatingText",
+"base": "Resource",
+"class": "PersistentStore",
 "language": "GDScript",
-"path": "res://scripts/classes/FloatingText.gd"
-}, {
-"base": "Node",
-"class": "LevelLoader",
-"language": "GDScript",
-"path": "res://scripts/classes/LevelLoader.gd"
+"path": "res://scripts/classes/PersistentStore.gd"
 } ]
 _global_script_class_icons={
-"FloatingText": "",
-"LevelLoader": ""
+"PersistentStore": ""
 }
 
 [application]
@@ -32,12 +26,12 @@ config/icon="res://icon.png"
 
 [autoload]
 
-Castledb="*res://singletons/castledb.gd"
-Store="*res://singletons/store.gd"
+Castledb="*res://autoloads/CastleDB.gd"
+Store="*res://autoloads/Store.gd"
 Functional="*res://lib/util/Functional.gd"
 GDUtil="*res://lib/util/GDUtil.gd"
-ClientConstants="*res://constants/client_constants.gd"
-GameConstants="*res://constants/game_constants.gd"
+ClientConstants="*res://constants/ClientConstants.gd"
+GameConstants="*res://constants/GameConstants.gd"
 
 [display]
 

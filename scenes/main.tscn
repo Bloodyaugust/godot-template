@@ -1,15 +1,28 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
-[ext_resource path="res://views/fps.gd" type="Script" id=1]
+[ext_resource path="res://views/FPS.gd" type="Script" id=1]
 [ext_resource path="res://icon.png" type="Texture" id=2]
 [ext_resource path="res://resources/themes/kenney/kenney.tres" type="Theme" id=3]
-[ext_resource path="res://views/main_menu.gd" type="Script" id=4]
+[ext_resource path="res://views/MainMenu.gd" type="Script" id=4]
 [ext_resource path="res://lib/BetterCam.tscn" type="PackedScene" id=5]
+
+[sub_resource type="Animation" id=1]
+resource_name = "ui_show"
+length = 0.5
+tracks/0/type = "bezier"
+tracks/0/path = NodePath(".:rect_position:y")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"points": PoolRealArray( -1200, -0.25, 0, 0.25, 0, 0, -0.418121, 49.6505, 0.25, 0 ),
+"times": PoolRealArray( 0, 0.5 )
+}
 
 [node name="Node2D" type="Node2D"]
 
 [node name="Sprite" type="Sprite" parent="."]
-position = Vector2( 505.364, 157.86 )
 texture = ExtResource( 2 )
 
 [node name="UIRoot" type="CanvasLayer" parent="."]
@@ -18,8 +31,8 @@ texture = ExtResource( 2 )
 anchor_left = 0.5
 anchor_right = 0.5
 anchor_bottom = 1.0
-margin_left = -50.0
-margin_right = 50.0
+margin_left = -77.0
+margin_right = 77.0
 theme = ExtResource( 3 )
 custom_constants/margin_top = 40
 custom_constants/margin_bottom = 40
@@ -65,7 +78,10 @@ margin_right = 100.0
 margin_bottom = 276.736
 text = "Play"
 
-[node name="MarginContainer" type="MarginContainer" parent="UIRoot"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="UIRoot/MainMenu"]
+anims/ui_show = SubResource( 1 )
+
+[node name="FPS" type="MarginContainer" parent="UIRoot"]
 margin_right = 40.0
 margin_bottom = 40.0
 theme = ExtResource( 3 )
@@ -75,7 +91,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Label" type="Label" parent="UIRoot/MarginContainer"]
+[node name="Label" type="Label" parent="UIRoot/FPS"]
 margin_left = 10.0
 margin_top = 13.0
 margin_right = 82.0
