@@ -8,6 +8,10 @@ var state: Dictionary = {
   "game": ""
  }
 
+func start_game() -> void:
+  set_state("client_view", ClientConstants.CLIENT_VIEW_NONE)
+  set_state("game", GameConstants.GAME_STARTING)
+
 func save_persistent_store() -> void:
   if ResourceSaver.save(ClientConstants.CLIENT_PERSISTENT_STORE_PATH, persistent_store) != OK:
     print("Failed to save persistent store")
@@ -18,7 +22,7 @@ func set_state(state_key: String, new_state) -> void:
   print("State changed: ", state_key, " -> ", state[state_key])
   
 func _initialize():
-  set_state("client_view", ClientConstants.CLIENT_VIEW_MAIN_MENU)
+  set_state("client_view", ClientConstants.CLIENT_VIEW_SPLASH)
   set_state("game", GameConstants.GAME_OVER)
 
 func _ready():
