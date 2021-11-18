@@ -1,6 +1,6 @@
 # godot-template
 
-A template for Godot projects.
+A template for Godot projects. Currently, this branch is set up for 3.4.stable.
 
 ## Modifying for a new game
 
