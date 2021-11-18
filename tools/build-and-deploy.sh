@@ -24,7 +24,7 @@ godot --export "Linux/X11" build/linux/godot-template.x86_64 -v
 # godot --export "Mac OSX" build/osx/godot-template.dmg -v
 echo "EXPORTING FOR WINDOZE"
 echo "-----------------------------"
-godot --export_debug "Windows Desktop" build/win/godot-template.exe -v
+godot --export-debug "Windows Desktop" build/win/godot-template.exe -v
 echo "-----------------------------"
 
 # echo "CHANGING FILETYPE AND CHMOD EXECUTABLE FOR OSX"
