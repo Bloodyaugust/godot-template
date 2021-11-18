@@ -16,9 +16,9 @@ mkdir build/linux/
 mkdir build/osx/
 mkdir build/win/
 
-# echo "EXPORTING FOR LINUX"
-# echo "-----------------------------"
-# godot --export "Linux/X11" build/linux/godot-template.x86_64 -v
+echo "EXPORTING FOR LINUX"
+echo "-----------------------------"
+godot --export "Linux/X11" build/linux/godot-template.x86_64 -v
 # echo "EXPORTING FOR OSX"
 # echo "-----------------------------"
 # godot --export "Mac OSX" build/osx/godot-template.dmg -v
