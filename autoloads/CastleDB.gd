@@ -1,6 +1,8 @@
 extends Node
 
-var db: Object
+var db: Variant
+
+var _json:JSON
 
 func get_entries(sheet_name: String) -> Array:
   for sheet in db.sheets:
@@ -18,16 +20,17 @@ func get_entry(sheet_name: String, type: String) -> Dictionary:
 
   return {}
 
-func _load_db() -> Object:
+func _load_db() -> Variant:
+  _json = JSON.new()
+  
   var file = File.new()
   file.open("res://data/base.json", File.READ)
 
-  var json = file.get_as_text()
+  var json:String = file.get_as_text()
   file.close()
 
-  var parsed_json = JSON.parse(json)
-
-  return parsed_json.result
+  _json.parse(json)
+  return _json.get_data()
 
 func _init():
   db = _load_db()

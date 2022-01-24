@@ -1,16 +1,16 @@
 extends Camera2D
 
-export var camera_follow_speed: float
-export var camera_target_speed: float
-export var camera_zoom_speed: float
-export var debug: bool
-export var key_movement: bool
-export var follow_curve: Curve
-export var follow_delta: float
-export var mouse_drag: bool
-export var zoom_follow_scalar: float
-export var zoom_min: float
-export var zoom_max: float
+@export var camera_follow_speed: float
+@export var camera_target_speed: float
+@export var camera_zoom_speed: float
+@export var debug: bool
+@export var key_movement: bool
+@export var follow_curve: Curve
+@export var follow_delta: float
+@export var mouse_drag: bool
+@export var zoom_follow_scalar: float
+@export var zoom_min: float
+@export var zoom_max: float
 
 var _camera_last_position: Vector2
 var _camera_last_zoom: Vector2
@@ -21,8 +21,8 @@ var _target: Node2D
 var _target_last_position: Vector2
 var _target_zoom: Vector2
 
-func set_target_position(position: Vector2) -> void:
-  _target.global_position = position
+func set_target_position(new_target_position: Vector2) -> void:
+  _target.global_position = new_target_position
 
 func _exit_tree():
   _target.queue_free()
@@ -39,7 +39,7 @@ func _handle_keys() -> void:
       _target.translate(Vector2.DOWN * camera_target_speed * get_process_delta_time())
 
 func _on_target_draw():
-  _target.draw_arc(_target.global_position, 100, 0, PI * 2, 32, Color.green)
+  _target.draw_arc(_target.global_position, 100, 0, PI * 2, 32, Color.GREEN)
 
 func _reset_follow() -> void:
   _camera_last_position = global_position
@@ -58,8 +58,8 @@ func _process(delta):
 
   var _interpolated_position_tween: float = follow_curve.interpolate(_position_tween)
 
-  global_position = global_position.linear_interpolate(_target_last_position, _interpolated_position_tween)
-  zoom = zoom.linear_interpolate(_target_zoom, _interpolated_position_tween)
+  global_position = global_position.lerp(_target_last_position, _interpolated_position_tween)
+  zoom = zoom.lerp(_target_zoom, _interpolated_position_tween)
 
   if debug:
     update()
@@ -71,7 +71,7 @@ func _ready():
   _target.global_position = global_position
   _target.z_index = 999
   if debug:
-    _target.connect("draw", self, "_on_target_draw")
+    _target.connect("draw", self._on_target_draw)
 
   get_tree().get_root().call_deferred("add_child", _target)
 
@@ -79,17 +79,17 @@ func _ready():
 
 func _unhandled_input(event):
   if event is InputEventMouseButton:
-    if event.button_index == BUTTON_WHEEL_UP:
+    if event.button_index == MOUSE_BUTTON_WHEEL_UP:
       _target_zoom = _target_zoom - Vector2(camera_zoom_speed, camera_zoom_speed)
-    if event.button_index == BUTTON_WHEEL_DOWN:
+    if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
       _target_zoom = _target_zoom + Vector2(camera_zoom_speed, camera_zoom_speed)
 
-    if event.button_index == BUTTON_WHEEL_UP || event.button_index == BUTTON_WHEEL_DOWN:
-      _target.global_position = _target.global_position.linear_interpolate(get_global_mouse_position(), (1 - (zoom.x / zoom_max)) * zoom_follow_scalar)
+    if event.button_index == MOUSE_BUTTON_WHEEL_UP || event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+      _target.global_position = _target.global_position.lerp(get_global_mouse_position(), (1 - (zoom.x / zoom_max)) * zoom_follow_scalar)
       _target_zoom = Vector2(clamp(_target_zoom.x, zoom_min, zoom_max), clamp(_target_zoom.y, zoom_min, zoom_max))
 
     if mouse_drag:
-      if event.button_index == BUTTON_RIGHT:
+      if event.button_index == MOUSE_BUTTON_RIGHT:
         if event.pressed:
           _dragging = true
           _drag_relative = Vector2()

@@ -1,0 +1,30 @@
+[remap]
+
+importer="font_data_dynamic"
+type="FontData"
+uid="uid://b60c7catax6li"
+path="res://.godot/imported/Kenney Pixel.ttf-a5ff7c3cd272c022d194da61a712f3b4.fontdata"
+
+[deps]
+
+source_file="res://resources/fonts/Fonts/Kenney Pixel.ttf"
+dest_files=["res://.godot/imported/Kenney Pixel.ttf-a5ff7c3cd272c022d194da61a712f3b4.fontdata"]
+
+[params]
+
+antialiased=true
+multichannel_signed_distance_field=false
+msdf_pixel_range=8
+msdf_size=48
+force_autohinter=false
+hinting=1
+oversampling=0.0
+compress=true
+opentype_feature_overrides={}
+preload/char_ranges=PackedStringArray()
+preload/glyph_ranges=PackedStringArray()
+preload/configurations=PackedStringArray()
+support_overrides/language_enabled=PackedStringArray()
+support_overrides/language_disabled=PackedStringArray()
+support_overrides/script_enabled=PackedStringArray()
+support_overrides/script_disabled=PackedStringArray()

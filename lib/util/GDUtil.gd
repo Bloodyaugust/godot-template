@@ -1,17 +1,17 @@
 extends Node
 
 static func centroid(points:Array) -> Vector2:
-  var centroid:Vector2 = Vector2.ZERO
+  var _centroid:Vector2 = Vector2.ZERO
 
   if points.size() == 0:
-    return centroid
+    return _centroid
 
   for _point in points:
-    centroid += _point
+    _centroid += _point
 
-  centroid = centroid / float(points.size())
+  _centroid = _centroid / float(points.size())
 
-  return centroid
+  return _centroid
 
 static func free_children(node):
   for n in node.get_children():
