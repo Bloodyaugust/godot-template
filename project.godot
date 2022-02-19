@@ -27,7 +27,7 @@ config/features=PackedStringArray("4.0")
 
 [autoload]
 
-Castledb="*res://autoloads/CastleDB.gd"
+Depot="*res://autoloads/Depot.gd"
 Store="*res://autoloads/Store.gd"
 GDUtil="*res://lib/util/GDUtil.gd"
 ClientConstants="*res://constants/ClientConstants.gd"

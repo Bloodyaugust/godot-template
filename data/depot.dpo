@@ -1,0 +1,350 @@
+{
+    "sheets": [
+        {
+            "name": "towers",
+            "description": "Towers for placement",
+            "displayColumn": "id",
+            "guid": "737cea69-f83b-4f4d-82f6-f0aeb045378f",
+            "columns": [
+                {
+                    "typeStr": "int",
+                    "guid": "aad8af17-9b60-475b-83f8-62331c0b44c7",
+                    "description": "How much the tower costs",
+                    "name": "cost",
+                    "min": 1,
+                    "max": 100000,
+                    "defaultValue": 10,
+                    "iconName": "newInt",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "int",
+                        "max": "int",
+                        "defaultValue": "int"
+                    }
+                },
+                {
+                    "typeStr": "float",
+                    "guid": "63ef9c50-e7bd-4a8b-8c39-5d102857a68e",
+                    "description": "The interval between attacks in seconds",
+                    "name": "attack-speed",
+                    "min": 0,
+                    "max": 10,
+                    "defaultValue": 1,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                },
+                {
+                    "typeStr": "float",
+                    "guid": "f11c8a7f-91d2-4343-82bc-69d873a54ea1",
+                    "description": "The damage done per shot",
+                    "name": "damage",
+                    "min": 0,
+                    "max": 100000,
+                    "defaultValue": 1,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                },
+                {
+                    "typeStr": "float",
+                    "guid": "c72c3f08-3fef-4172-8543-f23dd1d7b5ef",
+                    "description": "The area of effect for shots",
+                    "name": "aoe",
+                    "min": 0,
+                    "max": 100000,
+                    "defaultValue": 0,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                },
+                {
+                    "typeStr": "list",
+                    "guid": "b4727d97-bfcb-4ff4-bfb1-2558697cc86a",
+                    "name": "upgrades",
+                    "description": "Towers this tower can upgrade to",
+                    "sheet": "e4b7acf5-2f5c-43e4-a15a-ed0cff9b5e9c",
+                    "defaultValue": [],
+                    "iconName": "newList",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text"
+                    }
+                },
+                {
+                    "typeStr": "float",
+                    "guid": "0926b3ea-5820-4faa-9b24-92aca0b2df1a",
+                    "description": "The chance to do critical damage with each shot",
+                    "name": "crit-chance",
+                    "min": 0,
+                    "max": 1,
+                    "defaultValue": 0,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                },
+                {
+                    "typeStr": "float",
+                    "guid": "8dff7704-5a80-4e8d-a860-b1a3dd0db639",
+                    "description": "The critical hit multiplier",
+                    "name": "crit-multiplier",
+                    "min": 1,
+                    "max": 20,
+                    "defaultValue": 1,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                },
+                {
+                    "typeStr": "list",
+                    "guid": "8855bac8-0ad8-415d-b27a-03f6ef9f72ec",
+                    "name": "status-effects",
+                    "description": "The status effects this tower applies on hit",
+                    "sheet": "ce9407a6-cce5-4794-b151-41f4f44bf2de",
+                    "defaultValue": [],
+                    "iconName": "newList",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text"
+                    }
+                }
+            ],
+            "lines": [
+                {
+                    "guid": "403dcc4e-a026-4f83-950e-68e984511330",
+                    "id": "arrow",
+                    "cost": 10,
+                    "attack-speed": 1,
+                    "damage": 1,
+                    "aoe": 0,
+                    "upgrades": [
+                        {
+                            "guid": "df202eb6-ba6e-4917-acdf-1c48c41270e7",
+                            "tower": "d5d2dfb0-a7ef-4b0e-92fc-f4f41a169c79",
+                            "id": "0"
+                        }
+                    ],
+                    "crit-chance": 0.1,
+                    "crit-multiplier": 1.1,
+                    "status-effects": []
+                },
+                {
+                    "guid": "d5d2dfb0-a7ef-4b0e-92fc-f4f41a169c79",
+                    "id": "arrow-advanced",
+                    "cost": 20,
+                    "attack-speed": 0.45,
+                    "damage": 1.2,
+                    "aoe": 0,
+                    "upgrades": [],
+                    "crit-chance": 0.2,
+                    "crit-multiplier": 1.5,
+                    "status-effects": []
+                },
+                {
+                    "guid": "06545644-ed75-4d06-9d3a-363e2ddbd6f2",
+                    "id": "slow",
+                    "cost": 40,
+                    "attack-speed": 2,
+                    "damage": 0.5,
+                    "aoe": 50,
+                    "upgrades": [],
+                    "crit-chance": 0,
+                    "crit-multiplier": 1,
+                    "status-effects": [
+                        {
+                            "guid": "672b40e3-2d39-4310-944b-0aadfd570f98",
+                            "id": "0",
+                            "status-effect": "d8a1a3fd-242c-49d0-8aa1-65ae4bd08373"
+                        }
+                    ]
+                }
+            ],
+            "hidden": false,
+            "isProps": false,
+            "configurable": {
+                "name": "text",
+                "description": "text",
+                "displayColumn": "columnSelect@name",
+                "columnSelect@name@displayColumn": {
+                    "allowedTypes": [
+                        "int",
+                        "float",
+                        "text",
+                        "longtext"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "upgrades",
+            "description": "list@737cea69-f83b-4f4d-82f6-f0aeb045378f",
+            "displayColumn": "id",
+            "guid": "e4b7acf5-2f5c-43e4-a15a-ed0cff9b5e9c",
+            "columns": [
+                {
+                    "typeStr": "lineReference",
+                    "guid": "fae1f868-ee27-4fe2-bead-72e4407f8d2c",
+                    "name": "tower",
+                    "description": "The tower in the upgrade list",
+                    "sheet": "737cea69-f83b-4f4d-82f6-f0aeb045378f",
+                    "defaultValue": "",
+                    "iconName": "newLineLink",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "sheet": "sheetSelect",
+                        "defaultValue": "lineSelect@sheet"
+                    }
+                }
+            ],
+            "lines": [],
+            "hidden": true,
+            "isProps": false,
+            "parentSheetGUID": "737cea69-f83b-4f4d-82f6-f0aeb045378f",
+            "columnGUID": "b4727d97-bfcb-4ff4-bfb1-2558697cc86a"
+        },
+        {
+            "name": "status-effects",
+            "description": "Status effects that can be applied to enemies",
+            "displayColumn": "id",
+            "guid": "8079b49f-1793-4a59-8fd5-93abb79b02cc",
+            "columns": [
+                {
+                    "typeStr": "float",
+                    "guid": "fbbefe60-b7d5-48c1-bcef-6e6261659648",
+                    "description": "The time this status effect applies in seconds",
+                    "name": "duration",
+                    "min": 0,
+                    "max": 120,
+                    "defaultValue": 1,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                },
+                {
+                    "typeStr": "float",
+                    "guid": "aa3509ee-6d47-49f6-a2af-bbe306da9ec3",
+                    "description": "The amount of the status effect applied during duration",
+                    "name": "amount",
+                    "min": 0,
+                    "max": 10000,
+                    "defaultValue": 1,
+                    "iconName": "newFloat",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "min": "float",
+                        "max": "float",
+                        "defaultValue": "float"
+                    }
+                }
+            ],
+            "lines": [
+                {
+                    "guid": "d8a1a3fd-242c-49d0-8aa1-65ae4bd08373",
+                    "id": "slow",
+                    "duration": 1,
+                    "amount": 1
+                },
+                {
+                    "guid": "93482ee0-5de3-46d7-901c-bc42c27c0ca8",
+                    "id": "poison",
+                    "duration": 1,
+                    "amount": 1
+                },
+                {
+                    "guid": "75f93e7b-95ab-4d74-bf8e-b2069f7ec809",
+                    "id": "burn",
+                    "duration": 1,
+                    "amount": 1
+                },
+                {
+                    "guid": "180dd13e-2c47-49a9-8beb-756afa1c25e6",
+                    "id": "weak",
+                    "duration": 1,
+                    "amount": 1
+                },
+                {
+                    "guid": "e1e9ebbf-eee3-4948-bd29-c7c9d5f1a017",
+                    "id": "bleed",
+                    "duration": 1,
+                    "amount": 1
+                }
+            ],
+            "hidden": false,
+            "isProps": false,
+            "configurable": {
+                "name": "text",
+                "description": "text",
+                "displayColumn": "columnSelect@name",
+                "columnSelect@name@displayColumn": {
+                    "allowedTypes": [
+                        "int",
+                        "float",
+                        "text",
+                        "longtext"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "status-effects",
+            "description": "list@737cea69-f83b-4f4d-82f6-f0aeb045378f",
+            "displayColumn": "id",
+            "guid": "ce9407a6-cce5-4794-b151-41f4f44bf2de",
+            "columns": [
+                {
+                    "typeStr": "lineReference",
+                    "guid": "4d99b9eb-4f79-478e-aaab-a1a82cd8efb8",
+                    "name": "status-effect",
+                    "description": "The status effect for this entry",
+                    "sheet": "8079b49f-1793-4a59-8fd5-93abb79b02cc",
+                    "defaultValue": "",
+                    "iconName": "newLineLink",
+                    "configurable": {
+                        "name": "text",
+                        "description": "text",
+                        "sheet": "sheetSelect",
+                        "defaultValue": "lineSelect@sheet"
+                    }
+                }
+            ],
+            "lines": [],
+            "hidden": true,
+            "isProps": false,
+            "parentSheetGUID": "737cea69-f83b-4f4d-82f6-f0aeb045378f",
+            "columnGUID": "8855bac8-0ad8-415d-b27a-03f6ef9f72ec"
+        }
+    ]
+}
