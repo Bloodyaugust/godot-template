@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://yjseu11gr40d"]
+
+[ext_resource type="Texture2D" uid="uid://4typrc2p2rra" path="res://icon.png" id="1_o7h30"]
+
+[node name="BuildingPlacementPreview" type="Sprite2D"]
+modulate = Color(1, 1, 1, 0.498039)
+z_index = 1
+z_as_relative = false
+texture = ExtResource( "1_o7h30" )

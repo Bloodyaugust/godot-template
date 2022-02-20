@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://b4riq2dxsg7e7"]
+
+[ext_resource type="PackedScene" uid="uid://ce0popxtac3k3" path="res://views/Towers.tscn" id="1_xcx6m"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="UIRoot" type="CanvasLayer" parent="."]
+
+[node name="Towers" parent="UIRoot" instance=ExtResource( "1_xcx6m" )]

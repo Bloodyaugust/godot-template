@@ -32,6 +32,7 @@ Store="*res://autoloads/Store.gd"
 GDUtil="*res://lib/util/GDUtil.gd"
 ClientConstants="*res://constants/ClientConstants.gd"
 GameConstants="*res://constants/GameConstants.gd"
+TowerController="*res://scripts/controllers/TowerController.gd"
 
 [display]
 

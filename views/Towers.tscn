@@ -1,0 +1,33 @@
+[gd_scene load_steps=3 format=3 uid="uid://ce0popxtac3k3"]
+
+[ext_resource type="Theme" uid="uid://b15qjmc8yvspv" path="res://resources/themes/kenney/kenney.tres" id="1_sqiy4"]
+[ext_resource type="Script" path="res://views/Towers.gd" id="2_5dqqs"]
+
+[node name="Towers" type="PanelContainer"]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -20.0
+grow_horizontal = 0
+rect_min_size = Vector2(200, 0)
+theme = ExtResource( "1_sqiy4" )
+script = ExtResource( "2_5dqqs" )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 190.0
+offset_bottom = 590.0
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+offset_right = 180.0
+size_flags_horizontal = 3
+
+[node name="TowerList" type="VBoxContainer" parent="ScrollContainer/VBoxContainer"]
+offset_right = 180.0
+size_flags_horizontal = 3
+theme = ExtResource( "1_sqiy4" )

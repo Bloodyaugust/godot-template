@@ -5,12 +5,18 @@ signal state_changed(state_key, substate)
 var persistent_store:PersistentStore
 var state: Dictionary = {
   "client_view": "",
-  "game": ""
+  "game": "",
+  "tower_selection": null,
+  "tower_build_selection": null,
+  "money": 0,
  }
 
 func start_game() -> void:
   set_state("client_view", ClientConstants.CLIENT_VIEW_NONE)
   set_state("game", GameConstants.GAME_STARTING)
+  set_state("tower_selection", null)
+  set_state("tower_build_selection", null)
+  set_state("money", 0)
 
 func save_persistent_store() -> void:
   if ResourceSaver.save(ClientConstants.CLIENT_PERSISTENT_STORE_PATH, persistent_store) != OK:
@@ -24,6 +30,9 @@ func set_state(state_key: String, new_state) -> void:
 func _initialize():
   set_state("client_view", ClientConstants.CLIENT_VIEW_SPLASH)
   set_state("game", GameConstants.GAME_OVER)
+  set_state("tower_selection", null)
+  set_state("tower_build_selection", null)
+  set_state("money", 0)
 
 func _ready():
   if Directory.new().file_exists(ClientConstants.CLIENT_PERSISTENT_STORE_PATH):

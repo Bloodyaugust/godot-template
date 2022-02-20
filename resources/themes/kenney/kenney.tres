@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://d2wrp03byd7o8" path="res://resources/themes/kenney/9-Slice/Ancient/grey_pressed.png" id="2"]
 [ext_resource type="Texture2D" uid="uid://c0ttslld7auf" path="res://resources/themes/kenney/9-Slice/Ancient/grey.png" id="3"]
 [ext_resource type="Texture2D" uid="uid://bu05r112ibfv1" path="res://resources/themes/kenney/9-Slice/Ancient/brown_inlay.png" id="4"]
-[ext_resource type="Font" path="res://resources/fonts/kenney_pixel.tres" id="5"]
+[ext_resource type="Font" uid="uid://cihrohhvctaj1" path="res://resources/fonts/kenney_pixel.tres" id="5"]
 [ext_resource type="Texture2D" uid="uid://wkqgqqjw5u6" path="res://resources/themes/kenney/9-Slice/space.png" id="6_sttfw"]
 
 [sub_resource type="StyleBoxTexture" id="1"]
@@ -86,13 +86,19 @@ Button/colors/font_color_disabled = Color(0.9, 0.9, 0.9, 0.2)
 Button/colors/font_color_hover = Color(0.941176, 0.941176, 0.941176, 1)
 Button/colors/font_color_pressed = Color(1, 1, 1, 1)
 Button/constants/hseparation = 2
+Button/font_sizes/font_size = 16
 Button/fonts/font = ExtResource( "5" )
 Button/styles/disabled = SubResource( "1" )
 Button/styles/focus = SubResource( "2" )
 Button/styles/hover = SubResource( "3" )
 Button/styles/normal = SubResource( "4" )
 Button/styles/pressed = SubResource( "5" )
+HBoxContainer/constants/separation = 10
+Label/font_sizes/font_size = 20
+Label/fonts/font = ExtResource( "5" )
+Panel/font_sizes/font_size = 24
 Panel/styles/panel = SubResource( "6" )
 Panel/styles/panelf = SubResource( "7" )
 Panel/styles/panelnc = SubResource( "8" )
 PanelContainer/styles/panel = SubResource( "StyleBoxTexture_mkd7r" )
+VBoxContainer/constants/separation = 10
