@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://views/FPS.gd" type="Script" id=1]
 [ext_resource path="res://icon.png" type="Texture" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://views/MainMenu.gd" type="Script" id=4]
 [ext_resource path="res://lib/BetterCam.tscn" type="PackedScene" id=5]
 [ext_resource path="res://views/Splash.gd" type="Script" id=6]
+[ext_resource path="res://actors/Player.tscn" type="PackedScene" id=7]
 
 [sub_resource type="Animation" id=1]
 resource_name = "ui_show"
@@ -51,8 +52,7 @@ tracks/1/keys = {
 
 [node name="Node2D" type="Node2D"]
 
-[node name="Sprite" type="Sprite" parent="."]
-texture = ExtResource( 2 )
+[node name="Player" parent="." instance=ExtResource( 7 )]
 
 [node name="UIRoot" type="CanvasLayer" parent="."]
 

@@ -1,6 +1,6 @@
 FROM ubuntu:xenial
 
-ENV GODOT_VERSION "3.4"
+ENV GODOT_VERSION "3.5"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \

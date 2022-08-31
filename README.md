@@ -1,6 +1,8 @@
 # godot-template
 
-A template for Godot projects. Currently, this branch is set up for 3.4.stable.
+An opinionated template for Godot projects. Currently, this branch is set up for 3.5.stable.
+
+Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
 
 ## Modifying for a new game
 
@@ -28,11 +30,11 @@ This is where builds of your game go. In CI, we create subfolders for win, osx, 
 
 ### Constants
 
-Scripts that containt `const` variables in constant format. Usually autoload-ed.
+Scripts that contain `const` variables in constant format. Usually autoloaded.
 
 ### Data
 
-Contains JSON, YAML, and other file-as-database files. Ships with a CastleDB JSON flatfile.
+Custom `Resource` definitions and instances.
 
 ### Doodads
 
