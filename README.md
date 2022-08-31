@@ -4,6 +4,8 @@ An opinionated template for Godot projects. Currently, this branch is set up for
 
 Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
 
+This template also supplies a [CircleCI](https://circleci.com/) configuration, preconfigured with the Dockerfile also in this repo, for easy CI builds that also publish to [itch.io](https://itch.io).
+
 ## Modifying for a new game
 
 Change all instances of `godot-template` to `your-game-name` in:
