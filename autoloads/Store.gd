@@ -19,7 +19,7 @@ func start_game() -> void:
   set_state("money", 0)
 
 func save_persistent_store() -> void:
-  if ResourceSaver.save(ClientConstants.CLIENT_PERSISTENT_STORE_PATH, persistent_store) != OK:
+  if ResourceSaver.save(persistent_store, ClientConstants.CLIENT_PERSISTENT_STORE_PATH) != OK:
     print("Failed to save persistent store")
 
 func set_state(state_key: String, new_state) -> void:
@@ -35,7 +35,7 @@ func _initialize():
   set_state("money", 0)
 
 func _ready():
-  if Directory.new().file_exists(ClientConstants.CLIENT_PERSISTENT_STORE_PATH):
+  if FileAccess.file_exists(ClientConstants.CLIENT_PERSISTENT_STORE_PATH):
     persistent_store = load(ClientConstants.CLIENT_PERSISTENT_STORE_PATH)
 
   if !persistent_store:

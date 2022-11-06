@@ -56,13 +56,13 @@ func _process(delta):
   if mouse_drag && _dragging:
     _target.global_position += _drag_relative * delta * zoom.length()
 
-  var _interpolated_position_tween: float = follow_curve.interpolate(_position_tween)
+  var _interpolated_position_tween: float = follow_curve.sample(_position_tween)
 
   global_position = global_position.lerp(_target_last_position, _interpolated_position_tween)
   zoom = zoom.lerp(_target_zoom, _interpolated_position_tween)
 
   if debug:
-    update()
+    queue_redraw()
 
 func _ready():
   _target = Node2D.new()

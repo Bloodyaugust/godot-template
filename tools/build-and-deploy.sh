@@ -6,7 +6,7 @@ which butler
 
 echo "Checking application versions..."
 echo "-----------------------------"
-cat ~/.local/share/godot/templates/3.3.stable/version.txt
+cat ~/.local/share/godot/templates/4.0-beta4/version.txt
 godot --version
 butler -V
 echo "-----------------------------"
@@ -18,24 +18,24 @@ mkdir build/win/
 
 echo "EXPORTING FOR LINUX"
 echo "-----------------------------"
-godot --export "Linux/X11" build/linux/godot-template.x86_64 -v
+godot --export "Linux/X11" build/linux/godot-template-4.x86_64 -v
 # echo "EXPORTING FOR OSX"
 # echo "-----------------------------"
-# godot --export "Mac OSX" build/osx/godot-template.dmg -v
+# godot --export "Mac OSX" build/osx/godot-template-4.dmg -v
 echo "EXPORTING FOR WINDOZE"
 echo "-----------------------------"
-godot --export-debug "Windows Desktop" build/win/godot-template.exe -v
+godot --export-debug "Windows Desktop" build/win/godot-template-4.exe -v
 echo "-----------------------------"
 
 # echo "CHANGING FILETYPE AND CHMOD EXECUTABLE FOR OSX"
 # echo "-----------------------------"
 # cd build/osx/
-# mv godot-template.dmg godot-template-osx-alpha.zip
-# unzip godot-template-osx-alpha.zip
-# rm godot-template-osx-alpha.zip
-# chmod +x godot-template.app/Contents/MacOS/godot-template
-# zip -r godot-template-osx-alpha.zip godot-template.app
-# rm -rf godot-template.app
+# mv godot-template-4.dmg godot-template-4-osx-alpha.zip
+# unzip godot-template-4-osx-alpha.zip
+# rm godot-template-4-osx-alpha.zip
+# chmod +x godot-template-4.app/Contents/MacOS/godot-template-4
+# zip -r godot-template-4-osx-alpha.zip godot-template-4.app
+# rm -rf godot-template-4.app
 # cd ../../
 
 ls -al
@@ -47,15 +47,15 @@ ls -al build/win/
 echo "ZIPPING FOR WINDOZE"
 echo "-----------------------------"
 cd build/win/
-zip -r godot-template-win-alpha.zip godot-template.exe godot-template.pck
-rm -r godot-template.exe godot-template.pck
+zip -r godot-template-4-win-alpha.zip godot-template-4.exe godot-template-4.pck
+rm -r godot-template-4.exe godot-template-4.pck
 cd ../../
 
 echo "ZIPPING FOR LINUX"
 echo "-----------------------------"
 cd build/linux/
-zip -r godot-template-linux-alpha.zip godot-template.x86_64 godot-template.pck
-rm -r godot-template.x86_64 godot-template.pck
+zip -r godot-template-4-linux-alpha.zip godot-template-4.x86_64 godot-template-4.pck
+rm -r godot-template-4.x86_64 godot-template-4.pck
 cd ../../
 
 echo "Logging in to Butler"

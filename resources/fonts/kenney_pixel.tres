@@ -1,8 +1,0 @@
-[gd_resource type="Font" load_steps=3 format=3 uid="uid://cihrohhvctaj1"]
-
-[ext_resource type="FontData" uid="uid://c651ltjk8ratj" path="res://resources/fonts/Fonts/Kenney Blocks.ttf" id="2"]
-[ext_resource type="FontData" uid="uid://b60c7catax6li" path="res://resources/fonts/Fonts/Kenney Pixel.ttf" id="3"]
-
-[resource]
-data/0 = ExtResource( "3" )
-data/1 = ExtResource( "2" )

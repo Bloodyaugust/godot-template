@@ -1,11 +1,37 @@
-[gd_scene load_steps=9 format=3 uid="uid://bfjaqu2i4i63i"]
+[gd_scene load_steps=13 format=3 uid="uid://bfjaqu2i4i63i"]
 
 [ext_resource type="Script" path="res://views/FPS.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://dngu6lih2xxlo" path="res://actors/Player.tscn" id="1_4pt6e"]
 [ext_resource type="Texture2D" uid="uid://4typrc2p2rra" path="res://icon.png" id="2"]
-[ext_resource type="Theme" uid="uid://b15qjmc8yvspv" path="res://resources/themes/kenney/kenney.tres" id="3"]
+[ext_resource type="Theme" uid="uid://co811ue55i33m" path="res://resources/base_theme.tres" id="2_1ffbx"]
 [ext_resource type="Script" path="res://views/MainMenu.gd" id="4"]
 [ext_resource type="PackedScene" path="res://lib/BetterCam.tscn" id="5"]
 [ext_resource type="Script" path="res://views/Splash.gd" id="6"]
+
+[sub_resource type="Animation" id="Animation_baga0"]
+length = 0.001
+tracks/0/type = "bezier"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position:x")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(425.5, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/1/type = "bezier"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:position:y")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(-1000, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
 
 [sub_resource type="Animation" id="1"]
 resource_name = "ui_show"
@@ -13,12 +39,30 @@ length = 0.5
 tracks/0/type = "bezier"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath(".:rect_position:y")
+tracks/0/path = NodePath(".:position:x")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"points": PackedFloat32Array(),
-"times": PackedFloat32Array()
+"handle_modes": PackedInt32Array(0, 0),
+"points": PackedFloat32Array(425.5, -0.25, 0, 0.25, 0, 425.5, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0, 0.5)
+}
+tracks/1/type = "bezier"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:position:y")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"handle_modes": PackedInt32Array(0, 0),
+"points": PackedFloat32Array(-1000, -0.25, 0, 0.25, 0, 0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0, 0.5)
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_dnxrp"]
+_data = {
+"RESET": SubResource("Animation_baga0"),
+"ui_show": SubResource("1")
 }
 
 [sub_resource type="Animation" id="2"]
@@ -49,98 +93,124 @@ tracks/1/keys = {
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
 
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_pxbeb"]
+_data = {
+"ui_show": SubResource("2")
+}
+
 [node name="Node2D" type="Node2D"]
 
-[node name="Sprite" type="Sprite2D" parent="."]
-texture = ExtResource( "2" )
+[node name="Player" parent="." instance=ExtResource("1_4pt6e")]
 
 [node name="UIRoot" type="CanvasLayer" parent="."]
 
 [node name="MainMenu" type="MarginContainer" parent="UIRoot"]
+anchors_preset = 13
 anchor_left = 0.5
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -88.0
-offset_right = 88.0
-theme = ExtResource( "3" )
+offset_left = -150.5
+offset_top = -1000.0
+offset_right = 150.5
+offset_bottom = -1000.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_1ffbx")
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_bottom = 40
-script = ExtResource( "4" )
-__meta__ = {
-"_edit_use_anchors_": false
-}
+script = ExtResource("4")
 
 [node name="PanelContainer" type="PanelContainer" parent="UIRoot/MainMenu"]
+layout_mode = 2
+offset_left = 10.0
 offset_top = 40.0
-offset_right = 176.0
-offset_bottom = 560.0
+offset_right = 291.0
+offset_bottom = 608.0
 
 [node name="MarginContainer" type="MarginContainer" parent="UIRoot/MainMenu/PanelContainer"]
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 166.0
-offset_bottom = 510.0
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_top = 20
+layout_mode = 2
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 279.0
+offset_bottom = 566.0
 theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UIRoot/MainMenu/PanelContainer/MarginContainer"]
+layout_mode = 2
 offset_left = 20.0
 offset_top = 20.0
-offset_right = 136.0
-offset_bottom = 480.0
+offset_right = 257.0
+offset_bottom = 544.0
 theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Label" type="Label" parent="UIRoot/MainMenu/PanelContainer/MarginContainer/VBoxContainer"]
-offset_top = 169.0
-offset_right = 116.0
-offset_bottom = 223.0
-theme_override_font_sizes/font_size = 36
+layout_mode = 2
+offset_top = 210.0
+offset_right = 237.0
+offset_bottom = 270.0
+theme = ExtResource("2_1ffbx")
+theme_type_variation = &"H1"
 text = "Main Menu"
 
 [node name="Play" type="Button" parent="UIRoot/MainMenu/PanelContainer/MarginContainer/VBoxContainer"]
-offset_top = 243.0
-offset_right = 116.0
-offset_bottom = 291.0
+unique_name_in_owner = true
+layout_mode = 2
+offset_top = 290.0
+offset_right = 237.0
+offset_bottom = 314.0
 theme_override_font_sizes/font_size = 20
 text = "Play"
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="UIRoot/MainMenu"]
-anims/ui_show = SubResource( "1" )
+[node name="MainMenuAnimationPlayer" type="AnimationPlayer" parent="UIRoot/MainMenu"]
+unique_name_in_owner = true
+libraries = {
+"": SubResource("AnimationLibrary_dnxrp")
+}
 
 [node name="FPS" type="MarginContainer" parent="UIRoot"]
-theme = ExtResource( "3" )
-theme_override_constants/margin_top = 10
 theme_override_constants/margin_left = 10
-__meta__ = {
-"_edit_use_anchors_": false
-}
+theme_override_constants/margin_top = 10
 
 [node name="Label" type="Label" parent="UIRoot/FPS"]
+layout_mode = 2
 offset_left = 10.0
 offset_top = 10.0
-offset_right = 58.0
-offset_bottom = 40.0
+offset_right = 69.0
+offset_bottom = 36.0
 text = "144 FPS"
-script = ExtResource( "1" )
+script = ExtResource("1")
 
 [node name="Splash" type="ColorRect" parent="UIRoot"]
+visible = false
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0, 0, 0, 1)
-script = ExtResource( "6" )
-__meta__ = {
-"_edit_use_anchors_": false
-}
+script = ExtResource("6")
 
 [node name="TextureRect" type="TextureRect" parent="UIRoot/Splash"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-texture = ExtResource( "2" )
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="UIRoot/Splash"]
-anims/ui_show = SubResource( "2" )
+[node name="SplashAnimationPlayer" type="AnimationPlayer" parent="UIRoot/Splash"]
+unique_name_in_owner = true
+libraries = {
+"": SubResource("AnimationLibrary_pxbeb")
+}
 
-[node name="BetterCam" parent="." instance=ExtResource( "5" )]
+[node name="BetterCam" parent="." instance=ExtResource("5")]
+key_movement = false
+mouse_drag = false
+zoom_max = 1.0

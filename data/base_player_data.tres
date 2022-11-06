@@ -1,0 +1,8 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://tsqf267nyyx7"]
+
+[ext_resource type="Script" path="res://data/player_data.gd" id="1_72stq"]
+
+[resource]
+script = ExtResource("1_72stq")
+health = 5.0
+move_speed = 150.0

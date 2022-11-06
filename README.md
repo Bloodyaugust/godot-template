@@ -1,6 +1,10 @@
 # godot-template
 
-A template for Godot projects. Currently, this branch is set up for 3.4.stable.
+An opinionated template for Godot projects. Currently, this branch is set up for 4.0-beta4.
+
+Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
+
+This template also supplies a [CircleCI](https://circleci.com/) configuration, preconfigured with the Dockerfile also in this repo, for easy CI builds that also publish to [itch.io](https://itch.io).
 
 ## Modifying for a new game
 
@@ -28,11 +32,11 @@ This is where builds of your game go. In CI, we create subfolders for win, osx, 
 
 ### Constants
 
-Scripts that containt `const` variables in constant format. Usually autoload-ed.
+Scripts that contain `const` variables in constant format. Usually autoloaded.
 
 ### Data
 
-Contains JSON, YAML, and other file-as-database files. Ships with a CastleDB JSON flatfile.
+Custom `Resource` definitions and instances.
 
 ### Doodads
 
@@ -44,7 +48,7 @@ Like addons, but generally not for the editor. Generic scripts or scenes for thi
 
 ### Resources
 
-Non packed scene Godot editor files. Themes, fonts, materials, and the like go here. This template provides a simple UI theme from Kenney assets.
+Non packed scene Godot editor files. Themes, fonts, materials, and the like go here. This template provides a simple UI theme [based on Endesga's 32 bit lospec palette](https://lospec.com/palette-list/endesga-32).
 
 ### Scenes
 

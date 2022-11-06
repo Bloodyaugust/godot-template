@@ -1,6 +1,6 @@
 extends Control
 
-@onready var _animation_player:AnimationPlayer = find_node("AnimationPlayer")
+@onready var _animation_player:AnimationPlayer = %SplashAnimationPlayer
 
 var _skipped:bool = false
 

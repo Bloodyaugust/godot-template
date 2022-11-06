@@ -1,7 +1,7 @@
 extends Control
 
-@onready var _animation_player:AnimationPlayer = find_node("AnimationPlayer")
-@onready var _play_button: Button = find_node("Play")
+@onready var _animation_player:AnimationPlayer = %MainMenuAnimationPlayer
+@onready var _play_button: Button = %Play
 
 func _on_play_button_pressed() -> void:
   Store.start_game()

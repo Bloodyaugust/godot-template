@@ -1,0 +1,88 @@
+[gd_resource type="Theme" load_steps=8 format=3 uid="uid://co811ue55i33m"]
+
+[ext_resource type="FontFile" uid="uid://dcbmtfb4yroq0" path="res://resources/fonts/Roboto-Regular.ttf" id="1_8gnum"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8s2yx"]
+bg_color = Color(0.14902, 0.168627, 0.266667, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kdxwa"]
+bg_color = Color(0.352941, 0.411765, 0.533333, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4xa4c"]
+bg_color = Color(0.352941, 0.411765, 0.533333, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vsd83"]
+bg_color = Color(0.227451, 0.266667, 0.4, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qd1j5"]
+bg_color = Color(0, 0.6, 0.858824, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_og51k"]
+bg_color = Color(0.0941176, 0.0784314, 0.145098, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.964706, 0.458824, 0.478431, 1)
+
+[resource]
+default_font = ExtResource("1_8gnum")
+default_font_size = 16
+Button/colors/font_color = Color(0.172549, 0.909804, 0.960784, 1)
+Button/styles/disabled = SubResource("StyleBoxFlat_8s2yx")
+Button/styles/focus = SubResource("StyleBoxFlat_kdxwa")
+Button/styles/hover = SubResource("StyleBoxFlat_4xa4c")
+Button/styles/normal = SubResource("StyleBoxFlat_vsd83")
+Button/styles/pressed = SubResource("StyleBoxFlat_qd1j5")
+H1/base_type = &"Label"
+H1/font_sizes/font_size = 48
+HBoxContainer/constants/separation = 10
+Label/colors/font_color = Color(0.172549, 0.909804, 0.960784, 1)
+Label/font_sizes/content = 16
+Label/font_sizes/h1 = 48
+Label/font_sizes/h2 = 32
+Label/font_sizes/h3 = 24
+Label/font_sizes/subheading = 20
+MarginContainer/constants/margin_bottom = 10
+MarginContainer/constants/margin_left = 10
+MarginContainer/constants/margin_right = 10
+MarginContainer/constants/margin_top = 10
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_og51k")
+VBoxContainer/constants/separation = 10
+endesga32_palette/colors/accent_dark = Color(0.407843, 0.219608, 0.423529, 1)
+endesga32_palette/colors/accent_light = Color(0.964706, 0.458824, 0.478431, 1)
+endesga32_palette/colors/accent_medium = Color(0.709804, 0.313726, 0.533333, 1)
+endesga32_palette/colors/background_dark = Color(0.0941176, 0.0784314, 0.145098, 1)
+endesga32_palette/colors/background_light = Color(0.227451, 0.266667, 0.4, 1)
+endesga32_palette/colors/background_medium = Color(0.14902, 0.168627, 0.266667, 1)
+endesga32_palette/colors/foreground_dark = Color(0.352941, 0.411765, 0.533333, 1)
+endesga32_palette/colors/foreground_light = Color(0.752941, 0.796078, 0.862745, 1)
+endesga32_palette/colors/foreground_medium = Color(0.545098, 0.607843, 0.705882, 1)
+endesga32_palette/colors/text_dark = Color(0.0705882, 0.305882, 0.537255, 1)
+endesga32_palette/colors/text_light = Color(0, 0.6, 0.858824, 1)
+endesga32_palette/font_sizes/content = 16
+endesga32_palette/font_sizes/h1 = 48
+endesga32_palette/font_sizes/h2 = 32
+endesga32_palette/font_sizes/h3 = 24
+endesga32_palette/font_sizes/subheading = 20
+endesga32_palette/fonts/regular = ExtResource("1_8gnum")
