@@ -1,7 +1,7 @@
 FROM ubuntu:xenial
 
 ENV GODOT_VERSION "4.0"
-ENV GODOT_BETA_VERSION "beta4"
+ENV GODOT_BETA_VERSION "rc2"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
