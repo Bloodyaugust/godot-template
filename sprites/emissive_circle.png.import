@@ -16,9 +16,9 @@ dest_files=["res://.godot/imported/emissive_circle.png-82d4262e45df0bd325b54bc66
 [params]
 
 compress/mode=0
+compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
-compress/bptc_ldr=0
 compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=false

@@ -122,17 +122,9 @@ script = ExtResource("4")
 
 [node name="PanelContainer" type="PanelContainer" parent="UIRoot/MainMenu"]
 layout_mode = 2
-offset_left = 10.0
-offset_top = 40.0
-offset_right = 291.0
-offset_bottom = 608.0
 
 [node name="MarginContainer" type="MarginContainer" parent="UIRoot/MainMenu/PanelContainer"]
 layout_mode = 2
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 279.0
-offset_bottom = 566.0
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
@@ -140,18 +132,11 @@ theme_override_constants/margin_bottom = 20
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UIRoot/MainMenu/PanelContainer/MarginContainer"]
 layout_mode = 2
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 257.0
-offset_bottom = 544.0
 theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Label" type="Label" parent="UIRoot/MainMenu/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
-offset_top = 210.0
-offset_right = 237.0
-offset_bottom = 270.0
 theme = ExtResource("2_1ffbx")
 theme_type_variation = &"H1"
 text = "Main Menu"
@@ -159,9 +144,6 @@ text = "Main Menu"
 [node name="Play" type="Button" parent="UIRoot/MainMenu/PanelContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-offset_top = 290.0
-offset_right = 237.0
-offset_bottom = 314.0
 theme_override_font_sizes/font_size = 20
 text = "Play"
 
@@ -177,10 +159,6 @@ theme_override_constants/margin_top = 10
 
 [node name="Label" type="Label" parent="UIRoot/FPS"]
 layout_mode = 2
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 69.0
-offset_bottom = 36.0
 text = "144 FPS"
 script = ExtResource("1")
 
