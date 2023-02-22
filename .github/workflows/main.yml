@@ -1,8 +1,8 @@
-# Whenever a tag push matching pattern "v*" then run the job
 on: 
   push:
     branches:
-      - godot-4
+      #- godot-4
+      - none
 
 jobs:
   export_game:
