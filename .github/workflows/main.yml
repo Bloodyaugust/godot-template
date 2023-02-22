@@ -1,0 +1,46 @@
+# Whenever a tag push matching pattern "v*" then run the job
+on: 
+  push:
+    branches:
+      - godot-4
+
+jobs:
+  export_game:
+    # Always use ubuntu-latest for this action
+    runs-on: ubuntu-latest
+    # Add permission for release creation. Can be made narrower according to your needs
+    permissions: write-all
+    # Job name, can be anything
+    name: Export Game
+    steps:
+      # Always include the checkout step so that 
+      # your project is available for Godot to export
+    - name: checkout
+      uses: actions/checkout@v3.0.2
+  
+    # Automatically stores the tag name for later use
+    - name: get tag from version
+      id: tag_version
+      run: |
+          echo "TAG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+  
+    - name: export game
+      id: export
+      # Use latest version (see releases for all versions)
+      uses: firebelley/godot-export@v4.7.0
+      with:
+        # Defining all the required inputs
+        godot_executable_download_url: https://downloads.tuxfamily.org/godotengine/4.0/rc3/Godot_v4.0-rc3_linux.x86_64.zip
+        godot_export_templates_download_url: https://downloads.tuxfamily.org/godotengine/4.0/rc3/Godot_v4.0-rc3_export_templates.tpz
+        relative_project_path: ./
+        archive_output: true
+
+      # This release action has worked well for me. However, you can most likely use any release action of your choosing.
+      # https://github.com/ncipollo/release-action
+    - name: create release
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        generateReleaseNotes: true
+        tag: v${{ steps.tag_version.outputs.TAG_VERSION }} # Note that the 'v' in front was necessary to get this action attach to artifacts to the tag
+        artifacts: ${{ steps.export.outputs.archive_directory }}/*
