@@ -18,13 +18,13 @@ mkdir build/win/
 
 echo "EXPORTING FOR LINUX"
 echo "-----------------------------"
-godot --headless --export "Linux/X11" build/linux/godot-template-4.x86_64 -v
+godot --headless --export-debug "Linux/X11" build/linux/godot-template-4.x86_64 -v
 # echo "EXPORTING FOR OSX"
 # echo "-----------------------------"
 # godot --export "Mac OSX" build/osx/godot-template-4.dmg -v
 echo "EXPORTING FOR WINDOZE"
 echo "-----------------------------"
-godot --headless --export "Windows Desktop" build/win/godot-template-4.exe -v
+godot --headless --export-debug "Windows Desktop" build/win/godot-template-4.exe -v
 echo "-----------------------------"
 
 # echo "CHANGING FILETYPE AND CHMOD EXECUTABLE FOR OSX"
