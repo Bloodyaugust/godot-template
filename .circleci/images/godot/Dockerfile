@@ -26,10 +26,10 @@ RUN wget --quiet https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/${
     && wget --quiet https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/${GODOT_BETA_VERSION}/Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_export_templates.tpz \
     && mkdir ~/.cache \
     && mkdir -p ~/.config/godot \
-    && mkdir -p ~/.local/share/godot/templates/${GODOT_VERSION}-${GODOT_BETA_VERSION} \
+    && mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_BETA_VERSION} \
     && unzip Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_linux.x86_64.zip \
     && mv Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_linux.x86_64 /usr/local/bin/godot \
     && unzip Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_export_templates.tpz \
-    && mv templates/* ~/.local/share/godot/templates/${GODOT_VERSION}-${GODOT_BETA_VERSION} \
+    && mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_BETA_VERSION} \
     && rm -f Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_export_templates.tpz Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_linux.x86_64.zip \
     && cat ~/.local/share/godot/templates/${GODOT_VERSION}-${GODOT_BETA_VERSION}/version.txt
