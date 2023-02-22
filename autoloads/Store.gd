@@ -1,8 +1,10 @@
 extends Node
 
+const PersistentStore := preload("res://scripts/classes/PersistentStore.gd")
+
 signal state_changed(state_key, substate)
 
-var persistent_store:PersistentStore
+var persistent_store:Resource
 var state: Dictionary = {
   "client_view": "",
   "game": "",
