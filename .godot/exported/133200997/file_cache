@@ -1,0 +1,8 @@
+res://actors/Player.tscn::642bee4005c9a9f67dc23421663c5348::1675481276::res://.godot/exported/133200997/export-fc79aa3c8e250d7e057b60239dc5d7a4-Player.scn
+res://addons/godot-quick-find/Finder.tscn::a5ecaa5b1f7d98dbacb900fa58076940::1619220551::res://.godot/exported/133200997/export-672f3a1a2365d5513f1c447b9c90bd8c-Finder.scn
+res://data/base_player_data.tres::4ebda02afd5f8af0e713a28f4d9bcf4b::1675481276::res://.godot/exported/133200997/export-417727bedec8b4075911a7f1e8c829ba-base_player_data.res
+res://lib/BetterCam.tscn::8a361b06c23575fe507ea0b7f4917c94::1619221976::res://.godot/exported/133200997/export-fc647aba038be08ec229e3170d3ee1ef-BetterCam.scn
+res://resources/base_theme.tres::82e81b8498041bd812df537dac4b8ef8::1677098574::res://.godot/exported/133200997/export-d12be6e1d3780c69aaecf4e0561b46a5-base_theme.res
+res://scenes/main.tscn::b00eeca3a05714cf8164519143118530::1677098574::res://.godot/exported/133200997/export-3ad5c15c4f3250da0cc7c1af1770d85f-main.scn
+res://shaders/shake.tres::0591619658d881ee70fab28c4335d47b::1619220551::res://.godot/exported/133200997/export-9e8d37190d99fd3b6b8a102de70e7dd4-shake.res
+res://default_env.tres::756de160834ef7cc033c2a79cd80f338::1664507238::res://.godot/exported/133200997/export-7cf3fd67ad9f55210191d77b582b8209-default_env.res
