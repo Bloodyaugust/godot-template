@@ -11,14 +11,10 @@ godot --version
 butler -V
 echo "-----------------------------"
 
-timeout 5 godot --headless
 mkdir build/
 mkdir build/linux/
 mkdir build/osx/
 mkdir build/win/
-mkdir .godot
-mkdir .godot/editor
-mkdir .godot/imported
 
 echo "EXPORTING FOR LINUX"
 echo "-----------------------------"
