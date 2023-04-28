@@ -1,6 +1,6 @@
 # godot-template
 
-An opinionated template for Godot projects. Currently, this branch is set up for 4.0-rc2.
+An opinionated template for Godot projects. Currently, this branch is up-to-date with v4.0.2.
 
 Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
 
