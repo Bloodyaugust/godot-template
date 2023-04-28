@@ -1,7 +1,7 @@
 FROM ubuntu:xenial
 
-ENV GODOT_VERSION "4.0"
-ENV GODOT_BETA_VERSION "rc3"
+ENV GODOT_VERSION "4.0.2"
+ENV GODOT_BETA_VERSION "stable"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -22,8 +22,8 @@ RUN wget --quiet https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/defaul
 
 ENV PATH="/butler:${PATH}"
 
-RUN wget --quiet https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/${GODOT_BETA_VERSION}/Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_linux.x86_64.zip \
-    && wget --quiet https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/${GODOT_BETA_VERSION}/Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_export_templates.tpz \
+RUN wget --quiet https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_linux.x86_64.zip \
+    && wget --quiet https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-${GODOT_BETA_VERSION}_export_templates.tpz \
     && mkdir ~/.cache \
     && mkdir -p ~/.config/godot \
     && mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_BETA_VERSION} \
