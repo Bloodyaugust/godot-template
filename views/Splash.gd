@@ -1,25 +1,16 @@
 extends Control
 
-@onready var _animation_player:AnimationPlayer = %SplashAnimationPlayer
-
-var _skipped:bool = false
-
-func _on_state_changed(state_key: String, substate):
-  match state_key:
-    "client_view":
-      match substate:
-        ClientConstants.CLIENT_VIEW_SPLASH:
-          visible = true
-          _animation_player.play("ui_show")
-          await _animation_player.animation_finished
-          visible = false
-          Store.set_state("client_view", ClientConstants.CLIENT_VIEW_MAIN_MENU)
-
+var _skipped: bool = false
 
 func _ready():
-  Store.connect("state_changed", self._on_state_changed)
+  ViewController.register_view(ViewController.CLIENT_VIEWS.SPLASH, self)
+
+  await get_tree().create_timer(2).timeout
+
+  if !_skipped:
+    ViewController.set_client_view(ViewController.CLIENT_VIEWS.MAIN_MENU)
 
 func _unhandled_input(event):
-  if event is InputEventKey && !event.pressed && event.keycode == KEY_ESCAPE && !_skipped:
-    _animation_player.seek(_animation_player.current_animation_length - 0.1)
+  if event is InputEventKey && !event.pressed && event.keycode == KEY_ESCAPE:
     _skipped = true
+    ViewController.set_client_view(ViewController.CLIENT_VIEWS.MAIN_MENU)

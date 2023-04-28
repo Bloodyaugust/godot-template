@@ -6,19 +6,13 @@ signal state_changed(state_key, substate)
 
 var persistent_store:Resource
 var state: Dictionary = {
-  "client_view": "",
+  "client_view": ViewController.CLIENT_VIEWS.NONE,
   "game": "",
-  "tower_selection": null,
-  "tower_build_selection": null,
-  "money": 0,
  }
 
 func start_game() -> void:
-  set_state("client_view", ClientConstants.CLIENT_VIEW_NONE)
+  ViewController.set_client_view(ViewController.CLIENT_VIEWS.NONE)
   set_state("game", GameConstants.GAME_STARTING)
-  set_state("tower_selection", null)
-  set_state("tower_build_selection", null)
-  set_state("money", 0)
 
 func save_persistent_store() -> void:
   if ResourceSaver.save(persistent_store, ClientConstants.CLIENT_PERSISTENT_STORE_PATH) != OK:
@@ -30,11 +24,9 @@ func set_state(state_key: String, new_state) -> void:
   print("State changed: ", state_key, " -> ", state[state_key])
   
 func _initialize():
-  set_state("client_view", ClientConstants.CLIENT_VIEW_SPLASH)
   set_state("game", GameConstants.GAME_OVER)
-  set_state("tower_selection", null)
-  set_state("tower_build_selection", null)
-  set_state("money", 0)
+
+  (func(): ViewController.set_client_view(ViewController.CLIENT_VIEWS.SPLASH, ViewController.TRANSITION_TYPES.FADE)).call_deferred()
 
 func _ready():
   if FileAccess.file_exists(ClientConstants.CLIENT_PERSISTENT_STORE_PATH):

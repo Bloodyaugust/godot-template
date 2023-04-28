@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bfjaqu2i4i63i"]
+[gd_scene load_steps=8 format=3 uid="uid://bfjaqu2i4i63i"]
 
 [ext_resource type="Script" path="res://views/FPS.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://dngu6lih2xxlo" path="res://actors/Player.tscn" id="1_4pt6e"]
@@ -8,119 +8,24 @@
 [ext_resource type="PackedScene" path="res://lib/BetterCam.tscn" id="5"]
 [ext_resource type="Script" path="res://views/Splash.gd" id="6"]
 
-[sub_resource type="Animation" id="Animation_baga0"]
-length = 0.001
-tracks/0/type = "bezier"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:position:x")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"handle_modes": PackedInt32Array(0),
-"points": PackedFloat32Array(425.5, -0.25, 0, 0.25, 0),
-"times": PackedFloat32Array(0)
-}
-tracks/1/type = "bezier"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath(".:position:y")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"handle_modes": PackedInt32Array(0),
-"points": PackedFloat32Array(-1000, -0.25, 0, 0.25, 0),
-"times": PackedFloat32Array(0)
-}
-
-[sub_resource type="Animation" id="1"]
-resource_name = "ui_show"
-length = 0.5
-tracks/0/type = "bezier"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:position:x")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"handle_modes": PackedInt32Array(0, 0),
-"points": PackedFloat32Array(425.5, -0.25, 0, 0.25, 0, 425.5, -0.25, 0, 0.25, 0),
-"times": PackedFloat32Array(0, 0.5)
-}
-tracks/1/type = "bezier"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath(".:position:y")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"handle_modes": PackedInt32Array(0, 0),
-"points": PackedFloat32Array(-1000, -0.25, 0, 0.25, 0, 0, -0.25, 0, 0.25, 0),
-"times": PackedFloat32Array(0, 0.5)
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_dnxrp"]
-_data = {
-"RESET": SubResource("Animation_baga0"),
-"ui_show": SubResource("1")
-}
-
-[sub_resource type="Animation" id="2"]
-resource_name = "ui_show"
-length = 4.0
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("TextureRect:modulate")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 2),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath(".:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(3, 4),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_pxbeb"]
-_data = {
-"ui_show": SubResource("2")
-}
-
 [node name="Node2D" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_4pt6e")]
 
 [node name="UIRoot" type="CanvasLayer" parent="."]
 
-[node name="MainMenu" type="MarginContainer" parent="UIRoot"]
-anchors_preset = 13
-anchor_left = 0.5
-anchor_right = 0.5
+[node name="MainMenu" type="CenterContainer" parent="UIRoot"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -150.5
-offset_top = -1000.0
-offset_right = 150.5
-offset_bottom = -1000.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_1ffbx")
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_bottom = 40
 script = ExtResource("4")
 
 [node name="PanelContainer" type="PanelContainer" parent="UIRoot/MainMenu"]
+custom_minimum_size = Vector2(2.08165e-12, 600)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="UIRoot/MainMenu/PanelContainer"]
@@ -147,12 +52,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Play"
 
-[node name="MainMenuAnimationPlayer" type="AnimationPlayer" parent="UIRoot/MainMenu"]
-unique_name_in_owner = true
-libraries = {
-"": SubResource("AnimationLibrary_dnxrp")
-}
-
 [node name="FPS" type="MarginContainer" parent="UIRoot"]
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
@@ -173,7 +72,6 @@ color = Color(0, 0, 0, 1)
 script = ExtResource("6")
 
 [node name="TextureRect" type="TextureRect" parent="UIRoot/Splash"]
-modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -181,12 +79,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2")
-
-[node name="SplashAnimationPlayer" type="AnimationPlayer" parent="UIRoot/Splash"]
-unique_name_in_owner = true
-libraries = {
-"": SubResource("AnimationLibrary_pxbeb")
-}
 
 [node name="BetterCam" parent="." instance=ExtResource("5")]
 key_movement = false

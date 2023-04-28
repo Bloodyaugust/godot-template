@@ -1,4 +1,4 @@
-extends Reference
+extends Object
 
 var table: Array
 var total_weight: float
@@ -21,7 +21,7 @@ func initialize_table(objects: Array) -> void:
     print(item.chance)
 
 func pick() -> Dictionary:
-  var _pick_weight: float = rand_range(0, total_weight)
+  var _pick_weight: float = randf_range(0, total_weight)
   var _picked_item: Dictionary = {
     "type": null
   }
