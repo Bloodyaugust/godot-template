@@ -32,6 +32,10 @@ window/dpi/allow_hidpi=false
 
 enabled=PackedStringArray()
 
+[gui]
+
+theme/custom="res://resources/base_theme.tres"
+
 [input]
 
 move_left={

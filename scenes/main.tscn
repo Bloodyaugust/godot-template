@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bfjaqu2i4i63i"]
+[gd_scene load_steps=9 format=3 uid="uid://bfjaqu2i4i63i"]
 
 [ext_resource type="Script" path="res://views/FPS.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://dngu6lih2xxlo" path="res://actors/Player.tscn" id="1_4pt6e"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://views/MainMenu.gd" id="4"]
 [ext_resource type="PackedScene" path="res://lib/BetterCam.tscn" id="5"]
 [ext_resource type="Script" path="res://views/Splash.gd" id="6"]
+[ext_resource type="Script" path="res://views/About.gd" id="7_xk6j8"]
 
 [node name="Node2D" type="Node2D"]
 
@@ -52,6 +53,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Play"
 
+[node name="About" type="Button" parent="UIRoot/MainMenu/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "About"
+
 [node name="FPS" type="MarginContainer" parent="UIRoot"]
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
@@ -79,6 +86,42 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2")
+
+[node name="About" type="CenterContainer" parent="UIRoot"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_1ffbx")
+script = ExtResource("7_xk6j8")
+
+[node name="PanelContainer" type="PanelContainer" parent="UIRoot/About"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UIRoot/About/PanelContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIRoot/About/PanelContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UIRoot/About/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"H1"
+text = "About"
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="UIRoot/About/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"LargeLabel"
+text = "Made by: Greyson Richey
+Made with Godot"
+
+[node name="MainMenu" type="Button" parent="UIRoot/About/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Main Menu"
 
 [node name="BetterCam" parent="." instance=ExtResource("5")]
 key_movement = false
