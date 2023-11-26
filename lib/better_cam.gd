@@ -59,7 +59,7 @@ func _process(delta):
   var _interpolated_position_tween: float = follow_curve.sample(_position_tween)
 
   global_position = global_position.lerp(_target_last_position, _interpolated_position_tween)
-  zoom = zoom.lerp(_target_zoom, _interpolated_position_tween)
+  zoom = _target_zoom
 
   if debug:
     queue_redraw()
@@ -78,6 +78,10 @@ func _ready():
   _target_zoom = Vector2(zoom)
 
 func _unhandled_input(event):
+  if event is InputEventPanGesture:
+    _target_zoom = _target_zoom + Vector2(event.delta.y * camera_zoom_speed, event.delta.y * camera_zoom_speed)
+    print("mouse thing: ", event.delta)
+  
   if event is InputEventMouseButton:
     if event.button_index == MOUSE_BUTTON_WHEEL_UP:
       _target_zoom = _target_zoom - Vector2(camera_zoom_speed, camera_zoom_speed)
@@ -86,7 +90,6 @@ func _unhandled_input(event):
 
     if event.button_index == MOUSE_BUTTON_WHEEL_UP || event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
       _target.global_position = _target.global_position.lerp(get_global_mouse_position(), (1 - (zoom.x / zoom_max)) * zoom_follow_scalar)
-      _target_zoom = Vector2(clamp(_target_zoom.x, zoom_min, zoom_max), clamp(_target_zoom.y, zoom_min, zoom_max))
 
     if mouse_drag:
       if event.button_index == MOUSE_BUTTON_RIGHT:
@@ -98,3 +101,5 @@ func _unhandled_input(event):
 
   if mouse_drag && _dragging && event is InputEventMouseMotion:
     _drag_relative = _drag_relative + event.relative
+
+  _target_zoom = Vector2(clamp(_target_zoom.x, zoom_min, zoom_max), clamp(_target_zoom.y, zoom_min, zoom_max))

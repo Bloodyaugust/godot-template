@@ -8,6 +8,7 @@ var persistent_store:Resource
 var state: Dictionary = {
   "client_view": ViewController.CLIENT_VIEWS.NONE,
   "game": "",
+  "debug": true
  }
 
 func start_game() -> void:
@@ -26,7 +27,7 @@ func set_state(state_key: String, new_state) -> void:
 func _initialize():
   set_state("game", GameConstants.GAME_OVER)
 
-  (func(): ViewController.set_client_view(ViewController.CLIENT_VIEWS.SPLASH, ViewController.TRANSITION_TYPES.FADE)).call_deferred()
+  (func(): ViewController.set_client_view(ViewController.CLIENT_VIEWS.SPLASH if !state.debug else ViewController.CLIENT_VIEWS.MAIN_MENU, ViewController.TRANSITION_TYPES.FADE)).call_deferred()
 
 func _ready():
   if FileAccess.file_exists(ClientConstants.CLIENT_PERSISTENT_STORE_PATH):

@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Godot 4 Template Project"
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.0")
+config/features=PackedStringArray("4.2")
 config/icon="res://icon.png"
 
 [autoload]
@@ -69,4 +69,5 @@ file_logging/enable_file_logging=true
 
 [rendering]
 
+2d/snap/snap_2d_transforms_to_pixel=true
 environment/default_environment="res://default_env.tres"
