@@ -1,6 +1,6 @@
 # godot-template
 
-An opinionated template for Godot projects. Currently, this branch is up-to-date with v4.0.2.
+An opinionated template for Godot projects. Currently, this branch is up-to-date with v4.2.1.
 
 Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
 
@@ -11,6 +11,11 @@ This template also supplies a [CircleCI](https://circleci.com/) configuration, p
 Change all instances of `godot-template` to `your-game-name` in:
 - `export_presets.cfg`
 - `tools/build-and-deploy.sh`
+
+## Installing python deps and activating pre-commit hooks for gdformat
+
+`pip install -r requirements.txt`
+`pre-commit install`
 
 ## Folder structure
 

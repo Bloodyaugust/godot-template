@@ -1,6 +1,6 @@
 FROM ubuntu:xenial
 
-ENV GODOT_VERSION "4.0.2"
+ENV GODOT_VERSION "4.2.1"
 ENV GODOT_BETA_VERSION "stable"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
