@@ -29,8 +29,8 @@ var state: Dictionary
 ## cases, never pass a reference to _initial_state or some subset, _always_ use duplicate.
 var _initial_state: Dictionary = {
 	"client_view": ViewController.CLIENT_VIEWS.NONE,
-	"game": GameConstants.GAME_OVER,
-	"debug": OS.has_feature("editor")
+	GameConstants.STORE_KEYS.GAME_STATE: GameConstants.GAME_STATES.GAME_OVER,
+	"debug": OS.has_feature("editor")  # Debug will be true when running from editor, false in builds
 }
 
 
@@ -42,7 +42,7 @@ func start_game() -> void:
 	var _view_tween: Tween = ViewController.set_client_view(ViewController.CLIENT_VIEWS.NONE)
 
 	await _view_tween.finished
-	set_state("game", GameConstants.GAME_STARTING)
+	set_state(GameConstants.STORE_KEYS.GAME_STATE, GameConstants.GAME_STATES.GAME_STARTING)
 
 
 func save_persistent_store() -> void:

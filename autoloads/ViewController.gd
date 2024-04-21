@@ -2,9 +2,6 @@ extends Node
 
 enum CLIENT_VIEWS {
 	ABOUT,
-	ACHIEVEMENTS,
-	CREDITS,
-	GAME_OVER,
 	MAIN_MENU,
 	SPLASH,
 	NONE,
