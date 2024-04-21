@@ -1,4 +1,10 @@
 extends Node
+class_name GDUtil
+## A collection of common operations on nodes, such as queue_free()-ing all children of a node,
+## checking if a reference is safe to use, and various math/tile utilities.
+##
+## All methods of this class are static, so it should never be instantiated. This allows you to use
+## its functionality anywhere, without autoloads.
 
 
 static func centroid(points: Array) -> Vector2:
@@ -15,24 +21,33 @@ static func centroid(points: Array) -> Vector2:
 	return _centroid
 
 
+## free() all children of the passed node.
 static func free_children(node):
 	for n in node.get_children():
 		n.free()
 
 
+## queue_free() all children of the passed node.
 static func queue_free_children(node):
 	for n in node.get_children():
 		n.queue_free()
 
 
-static func reference_safe(node: Node) -> bool:
-	return node != null && !node.is_queued_for_deletion() && is_instance_valid(node)
+## Checks if the argument is null, queued for deletion, and a valid instance.
+##
+## Use this function when you want to do work with a reference that may at some point be freed, or
+## may be initialized to null. The argument is typed as Variant to avoid errors when passing null,
+## but this function should only be used for types that inherit from Object (which is everything
+## that can be freed).
+static func reference_safe(object: Variant) -> bool:
+	return object != null && !object.is_queued_for_deletion() && is_instance_valid(object)
 
 
 static func tilemap_global_cell_position(tilemap: TileMap, position: Vector2) -> Vector2:
 	return tilemap.to_global(tilemap.map_to_world(tilemap.world_to_map(tilemap.to_local(position))))
 
 
+## Returns all files in a directory. Useful for data-driven games.
 static func load_directory(directory_path: String) -> Array[Variant]:
 	var _directory: DirAccess = DirAccess.open(directory_path)
 	var _paths: Array[String] = []

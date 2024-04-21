@@ -16,4 +16,6 @@ func _ready():
 	_about_button.connect("pressed", self._on_about_button_pressed)
 	_play_button.connect("pressed", self._on_play_button_pressed)
 
-	ViewController.register_view(ViewController.CLIENT_VIEWS.MAIN_MENU, self)
+	ViewController.register_view(
+		ViewController.CLIENT_VIEWS.MAIN_MENU, self, ViewController.TRANSITION_TYPES.FADE
+	)

@@ -10,4 +10,6 @@ func _on_main_menu_button_pressed() -> void:
 func _ready():
 	_main_menu_button.connect("pressed", self._on_main_menu_button_pressed)
 
-	ViewController.register_view(ViewController.CLIENT_VIEWS.ABOUT, self)
+	ViewController.register_view(
+		ViewController.CLIENT_VIEWS.ABOUT, self, ViewController.TRANSITION_TYPES.SLIDE
+	)

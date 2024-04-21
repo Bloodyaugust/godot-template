@@ -4,7 +4,9 @@ var _skipped: bool = false
 
 
 func _ready():
-	ViewController.register_view(ViewController.CLIENT_VIEWS.SPLASH, self)
+	ViewController.register_view(
+		ViewController.CLIENT_VIEWS.SPLASH, self, ViewController.TRANSITION_TYPES.FADE
+	)
 
 	_skipped = Store.state.debug
 
@@ -16,6 +18,7 @@ func _ready():
 
 
 func _unhandled_input(event):
-	if event is InputEventKey && !event.pressed && event.keycode == KEY_ESCAPE:
-		_skipped = true
-		ViewController.set_client_view(ViewController.CLIENT_VIEWS.MAIN_MENU)
+	if visible:
+		if event is InputEventKey && !event.pressed && event.keycode == KEY_ESCAPE:
+			_skipped = true
+			ViewController.set_client_view(ViewController.CLIENT_VIEWS.MAIN_MENU)
