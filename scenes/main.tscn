@@ -1,13 +1,13 @@
 [gd_scene load_steps=9 format=3 uid="uid://bfjaqu2i4i63i"]
 
-[ext_resource type="Script" path="res://views/FPS.gd" id="1"]
+[ext_resource type="Script" uid="uid://b083a7qtfehlr" path="res://views/FPS.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://dngu6lih2xxlo" path="res://actors/Player.tscn" id="1_4pt6e"]
 [ext_resource type="Texture2D" uid="uid://4typrc2p2rra" path="res://icon.png" id="2"]
 [ext_resource type="Theme" uid="uid://co811ue55i33m" path="res://resources/base_theme.tres" id="2_1ffbx"]
-[ext_resource type="Script" path="res://views/MainMenu.gd" id="4"]
+[ext_resource type="Script" uid="uid://b53domrnxckir" path="res://views/MainMenu.gd" id="4"]
 [ext_resource type="PackedScene" path="res://lib/BetterCam.tscn" id="5"]
-[ext_resource type="Script" path="res://views/Splash.gd" id="6"]
-[ext_resource type="Script" path="res://views/About.gd" id="7_xk6j8"]
+[ext_resource type="Script" uid="uid://cig228glnwn62" path="res://views/Splash.gd" id="6"]
+[ext_resource type="Script" uid="uid://btwalvyl3xqa3" path="res://views/About.gd" id="7_xk6j8"]
 
 [node name="Node2D" type="Node2D"]
 
