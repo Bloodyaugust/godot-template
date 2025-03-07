@@ -63,5 +63,7 @@ func set_client_view(view: CLIENT_VIEWS) -> Tween:
 				TRANSITION_TYPES.FADE:
 					view_instances[view].modulate = Color.TRANSPARENT
 					_view_tween.tween_property(view_instances[view], "modulate", Color.WHITE, 0.5)
+	else:
+		_view_tween.tween_callback(func(): print("set_client_view called with no valid _ui_root"))
 
 	return _view_tween
