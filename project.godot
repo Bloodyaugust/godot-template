@@ -11,26 +11,29 @@ config_version=5
 [application]
 
 config/name="Godot 4 Template Project"
-run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.4")
+run/main_scene="uid://b13g2hd5l0y24"
+config/features=PackedStringArray("4.5", "C#")
 config/icon="res://icon.png"
 
 [autoload]
 
-Store="*res://autoloads/Store.gd"
-ViewController="*res://autoloads/ViewController.gd"
+ViewStore="*res://autoloads/ViewStore.cs"
 
 [display]
 
 window/dpi/allow_hidpi=false
 
+[dotnet]
+
+project/assembly_name="Godot 4 Template Project"
+
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg")
 
-[gui]
+[gdunit4]
 
-theme/custom="res://resources/base_theme.tres"
+settings/test/test_lookup_folder="tests"
 
 [input]
 

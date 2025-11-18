@@ -1,2 +1,0 @@
-pre-commit
-gdtoolkit==4.3.1

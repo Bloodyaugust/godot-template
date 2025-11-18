@@ -1,21 +1,30 @@
-# godot-template
+# godot-template C#
 
-An opinionated template for Godot projects. Currently, this branch is up-to-date with v4.4-stable
+An opinionated template for Godot projects. Currently, this branch is up-to-date with v4.5.1-stable_mono.
 
 Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
 
-This template also supplies a [CircleCI](https://circleci.com/) configuration, preconfigured with the Dockerfile also in this repo, for easy CI builds that also publish to [itch.io](https://itch.io).
+## Dependencies
 
-## Modifying for a new game
+- Godot v4.5.1-stable_mono
+- GDUnit4
+- `dotnet` cli
 
-Change all instances of `godot-template` to `your-game-name` in:
-- `export_presets.cfg`
-- `tools/build-and-deploy.sh`
+## Getting started
 
-## Installing python deps and activating pre-commit hooks for gdformat
+- Clone project
+- Change all instances of `godot-template` to `your-game-name` in the project with a find-replace
+- Open project in Godot
+- Build dotnet package in Godot (top-right left of play button)
+- `dotnet restore` to install nuget packages
+- Enable running and debugging tests in VSCode by adding `.vscode\settings.json` with `"dotnet.unitTests.runSettingsPath": ".runsettings"`
 
-`pip install -r requirements.txt`
-`pre-commit install`
+## Running tests
+
+From within a bash shell (git bash for windows):
+`./addons/gdUnit4/runtest.sh -a ./tests`
+
+Tests can also be run from within Godot using the GdUnit panel in the top-left, or within VSCode with debugging.
 
 ## Folder structure
 
@@ -29,7 +38,7 @@ Godot editor addon scripts.
 
 ### Autoloads
 
-Like controllers, but autoloaded and marked as singletons in the project menu of the editor.
+Any auto-loaded script. Takes precedence over all other subfolders.
 
 ### Build
 
@@ -37,11 +46,7 @@ This is where builds of your game go. In CI, we create subfolders for win, osx, 
 
 ### Constants
 
-Scripts that contain `const` variables in constant format. Usually autoloaded.
-
-### Data
-
-Custom `Resource` definitions and instances.
+Declare constant data here.
 
 ### Doodads
 
@@ -49,11 +54,11 @@ Packed scenes and scripts for game objects that implement no behavior or very mi
 
 ### Lib
 
-Like addons, but generally not for the editor. Generic scripts or scenes for things like data structures and cameras.
+Custom classes, types, structs, etc.
 
 ### Resources
 
-Non packed scene Godot editor files. Themes, fonts, materials, and the like go here. This template provides a simple UI theme [based on Endesga's 32 bit lospec palette](https://lospec.com/palette-list/endesga-32).
+Non packed scene Godot editor files. Themes, fonts, materials, and the like go here.
 
 ### Scenes
 
@@ -61,11 +66,7 @@ Packed scenes that represent complete collections for some stage of gameplay or 
 
 ### Scripts
 
-Contains subfolders for most kinds of gdscripts.
-
-#### Behaviors
-
-These scripts implement a shared interface, such as for tracking health and taking damage. Usually paired with a packed scene in the root `Behaviors` folder.
+Contains subfolders for different types of scripts.
 
 #### Classes
 
@@ -73,7 +74,7 @@ These scripts implement the basis for large collections of functionality and sta
 
 #### Controllers
 
-These scripts are for those one-off bits of functionality like tracking state for game win/over, providing services like tracking all enemies, etc.
+These scripts are for those one-off bits of functionality like tracking state for game win/over, providing services like tracking all enemies, etc. Generally a singleton per-scene, but not an autoload.
 
 ### Shaders
 
@@ -83,22 +84,10 @@ Yupp.
 
 Images for all your in-game and UI needs.
 
-### Tools
-
-Scripts for creating builds, doing other CI things, or mutating/generating assets.
-
 ### Views
 
-Scripts that control UI, usually heavily tied into the `Store`. Also generally placed on the root of a tree of `Control` nodes. If you need to instantiate your UI, the packed scene also goes here.
+Scripts for controlling UI, always extend `Control`.
 
 #### Components
 
 Scripts and packed scenes for instantiated pieces of your UI, like dynamic, selectable items such as buildings, units, etc.
-
-## Dockerfile
-
-To build:
-`docker build .circleci/images/godot/ -t greysonr/godot_butler:<version number>`
-
-To push:
-`docker push greysonr/godot_butler:<tag name>`
