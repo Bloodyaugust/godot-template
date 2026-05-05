@@ -4,7 +4,16 @@ Update this file whenever major architectural changes occur.
 
 Observe the README.md file in a subdirectory when making changes there. If you create or find a subdirectory that is not gitignored when looking for relevant source or making changes, create one. If you meaningfully change functionality in a directory, update its README.md.
 
-For Godot-specific documentation searches, there is a `docs` directory in the root of the project that contains all of the Godot documentation, downloaded locally. Prefer that to searching the internet for Godot documentation. (`docs/` is gitignored — populate it locally if missing.)
+For Godot-specific documentation searches, there is a `docs` directory in the root of the project that contains all of the Godot documentation, downloaded locally. Prefer that to searching the internet for Godot documentation.
+
+`docs/` is gitignored. To populate it, download the latest stable HTML build and unzip it into `docs/`:
+
+```sh
+mkdir -p docs
+curl -L -o /tmp/godot-docs.zip https://nightly.link/godotengine/godot-docs/workflows/build_offline_docs/master/godot-docs-html-stable.zip
+unzip -q /tmp/godot-docs.zip -d docs
+rm /tmp/godot-docs.zip
+```
 
 After making code changes, always run `dotnet build` to verify the project compiles before reporting the work as done.
 
