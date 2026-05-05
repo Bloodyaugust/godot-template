@@ -1,3 +1,11 @@
-[gd_scene format=3 uid="uid://crugjb6ckvs0s"]
+[gd_scene load_steps=3 format=3 uid="uid://crugjb6ckvs0s"]
 
-[node name="Node2D" type="Node2D" unique_id=1115237622]
+[ext_resource type="Script" path="res://scripts/test/Player.cs" id="1_player"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_icon"]
+
+[node name="Main" type="Node2D"]
+
+[node name="Player" type="Sprite2D" parent="."]
+position = Vector2(576, 324)
+texture = ExtResource("2_icon")
+script = ExtResource("1_player")

@@ -22,7 +22,21 @@ After you make changes, provide a summary of what was changed, and prompt the us
 ## Architecture
 
 ### Main Scene
-The main scene is set via `run/main_scene` in `project.godot`. This template ships without one — add your scene under `scenes/` and point `run/main_scene` at it.
+The main scene is set via `run/main_scene` in `project.godot`. The template ships with `scenes/main.tscn`, a demo scene containing a `Sprite2D` driven by `scripts/test/Player.cs` — useful for verifying the agent REST surface end-to-end. Replace it with your own scene when starting real work and delete `scripts/test/`.
+
+### Agent REST Server
+`scripts/server/AgentRestServer.cs` is a debug-build-only autoload that exposes a small HTTP API for external agents (claude code, scripts) to drive a running game. Default bind is `http://127.0.0.1:8080/`; override with the `GODOT_AGENT_REST_PREFIX` env var. Disabled in release builds via `OS.IsDebugBuild()`.
+
+Endpoints:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/status` | Sanity check; returns running flag, current scene path, Godot version. |
+| `POST` | `/input/action` | Body `{"action": "<name>", "mode": "press"\|"release"\|"tap"}`. `tap` auto-releases after one `_Process` frame. |
+| `GET` | `/nodes?group=<name>` | Returns `[ {path, name, type, position?, properties?}, ... ]` for nodes in the named group. |
+| `POST` or `GET` | `/quit` | Optional `?code=<int>` query (or JSON body `{"code": <int>}` on POST). Calls `GetTree().Quit(code)` after a 5-frame delay so the response flushes first. `GET` is accepted because Windows HTTP.sys rejects bodyless POSTs with 411. |
+
+Per-node JSON includes `position` for `Node2D`/`Node3D` and a `properties` object for nodes that implement `godottemplate.Server.IAgentInspectable` (`scripts/server/IAgentInspectable.cs`). Implementers return a `Dictionary<string, object>` of extra fields. The HTTP listener runs on a background task; all handlers execute on the main thread inside `_Process` so they may freely touch the scene tree. See `scripts/server/README.md` for examples.
 
 ### Directory Layout
 - `scripts/` — C# game logic. Add subdirectories per system (e.g. `units/`, `world/`, `ui/`) as the project grows; the template keeps it flat.

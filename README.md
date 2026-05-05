@@ -32,6 +32,10 @@ An opinionated Godot 4.6 Mono (C#) project template. Use as a starting point for
 
 Each non-gitignored subdirectory should carry its own `README.md` describing its contents.
 
+## Agent REST interface
+
+A debug-build-only HTTP server (`scripts/server/AgentRestServer.cs`, registered as an autoload) lets external agents drive a running game — trigger input actions and query nodes by group. Defaults to `http://127.0.0.1:8080/`, override with the `GODOT_AGENT_REST_PREFIX` env var. See `scripts/server/README.md` for endpoint details and `curl` examples. The shipped `scenes/main.tscn` is a small demo scene wired up to verify the surface end-to-end.
+
 ## Tooling
 
 - `CLAUDE.md` — instructions for [Claude Code](https://claude.com/claude-code).
