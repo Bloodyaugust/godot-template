@@ -1,3 +1,3 @@
 # sprites/
 
-Individual sprite images and their `.import` sidecars. Use `spritesheets/` for packed atlases.
+Sprite images and their `.import` sidecars, including both individual sprites and packed spritesheets/atlases.

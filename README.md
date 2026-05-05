@@ -27,8 +27,7 @@ An opinionated Godot 4.6 Mono (C#) project template. Use as a starting point for
 | `scenes/` | `.tscn` files. Mirror the structure of `scripts/`. |
 | `resources/` | `.tres` files defining game content (`[GlobalClass]` Resource subclasses). |
 | `shaders/` | `.gdshader` files. |
-| `sprites/` | Individual sprite images and their `.import` sidecars. |
-| `spritesheets/` | Packed spritesheet images. |
+| `sprites/` | Sprite images and their `.import` sidecars (individual sprites and packed atlases). |
 | `ideas/` | Markdown design notes for in-flight features; move completed ones to `ideas/done/`. |
 
 Each non-gitignored subdirectory should carry its own `README.md` describing its contents.

@@ -20,8 +20,7 @@ The main scene is set via `run/main_scene` in `project.godot`. This template shi
 - `scenes/` — `.tscn` scene files, mirroring the structure of `scripts/`.
 - `resources/` — `.tres` content files (`[GlobalClass]` Resource subclasses). See `resources/README.md` for the C# `.tres` format requirements.
 - `shaders/` — `.gdshader` files.
-- `sprites/` — individual sprite images and their `.import` sidecars.
-- `spritesheets/` — packed spritesheet images and their `.import` sidecars.
+- `sprites/` — sprite images and their `.import` sidecars (both individual sprites and packed atlases).
 - `ideas/` — markdown design notes for in-flight features. Move completed ideas into `ideas/done/`.
 
 ### UI Panels
