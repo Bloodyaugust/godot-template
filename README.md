@@ -1,93 +1,43 @@
-# godot-template C#
+# godot-template
 
-An opinionated template for Godot projects. Currently, this branch is up-to-date with v4.5.1-stable_mono.
-
-Following the structure provided by this template can speed up development, especially for jams or prototypes. It's probably not enough for larger projects, but can serve as a good starting point.
+An opinionated Godot 4.6 Mono (C#) project template. Use as a starting point for game jams, prototypes, or small projects.
 
 ## Dependencies
 
-- Godot v4.5.1-stable_mono
-- GDUnit4
-- `dotnet` cli
+- Godot 4.6 mono
+- `dotnet` CLI (.NET 8 SDK; .NET 9 if targeting Android)
 
 ## Getting started
 
-- Clone project
-- Change all instances of `godot-template` to `your-game-name` in the project with a find-replace
-- Open project in Godot
-- Build dotnet package in Godot (top-right left of play button)
-- `dotnet restore` to install nuget packages
-- Enable running and debugging tests in VSCode by adding `.vscode\settings.json` with `"dotnet.unitTests.runSettingsPath": ".runsettings"`
-
-## Running tests
-
-From within a bash shell (git bash for windows):
-`./addons/gdUnit4/runtest.sh -a ./tests`
-
-Tests can also be run from within Godot using the GdUnit panel in the top-left, or within VSCode with debugging.
+1. Clone or copy this template into a new directory.
+2. Find-replace every instance of `godot-template` with your project name. Files affected:
+   - `godot-template.csproj` → rename to `<your-name>.csproj`
+   - `godot-template.sln` → rename to `<your-name>.sln`
+   - `project.godot` (`config/name`, `project/assembly_name`)
+   - `godot-template.csproj` `<RootNamespace>` (use a valid C# identifier, e.g. `mygame`)
+3. Open the project in Godot.
+4. Build the dotnet project from inside Godot (top-right hammer, left of the Play button) to populate `.godot/` and verify the toolchain is wired up.
+5. `dotnet build` from a shell to confirm a clean compile outside of Godot.
 
 ## Folder structure
 
-### Actors
+| Folder | Purpose |
+|--------|---------|
+| `scripts/` | C# source files for game logic. Add subdirectories per system as the project grows. |
+| `scenes/` | `.tscn` files. Mirror the structure of `scripts/`. |
+| `resources/` | `.tres` files defining game content (`[GlobalClass]` Resource subclasses). |
+| `shaders/` | `.gdshader` files. |
+| `sprites/` | Individual sprite images and their `.import` sidecars. |
+| `spritesheets/` | Packed spritesheet images. |
+| `ideas/` | Markdown design notes for in-flight features; move completed ones to `ideas/done/`. |
 
-Packed scenes for gameplay objects that need to be manually placed or (usually) instantiated in scripts.
+Each non-gitignored subdirectory should carry its own `README.md` describing its contents.
 
-### Addons
+## Tooling
 
-Godot editor addon scripts.
-
-### Autoloads
-
-Any auto-loaded script. Takes precedence over all other subfolders.
-
-### Build
-
-This is where builds of your game go. In CI, we create subfolders for win, osx, linux, and html5.
-
-### Constants
-
-Declare constant data here.
-
-### Doodads
-
-Packed scenes and scripts for game objects that implement no behavior or very minimal, non-player-interactive behavior.
-
-### Lib
-
-Custom classes, types, structs, etc.
-
-### Resources
-
-Non packed scene Godot editor files. Themes, fonts, materials, and the like go here.
-
-### Scenes
-
-Packed scenes that represent complete collections for some stage of gameplay or testing (like Scenes in Unity).
-
-### Scripts
-
-Contains subfolders for different types of scripts.
-
-#### Classes
-
-These scripts implement the basis for large collections of functionality and state. Usually paired with a packed scene in the root `Actors` folder.
-
-#### Controllers
-
-These scripts are for those one-off bits of functionality like tracking state for game win/over, providing services like tracking all enemies, etc. Generally a singleton per-scene, but not an autoload.
-
-### Shaders
-
-Yupp.
-
-### Sprites
-
-Images for all your in-game and UI needs.
-
-### Views
-
-Scripts for controlling UI, always extend `Control`.
-
-#### Components
-
-Scripts and packed scenes for instantiated pieces of your UI, like dynamic, selectable items such as buildings, units, etc.
+- `CLAUDE.md` — instructions for [Claude Code](https://claude.com/claude-code).
+- `AGENTS.md` — symlink-style pointer for agentic CLI tools that look up `AGENTS.md` instead of `CLAUDE.md`.
+- `opencode.json` — [opencode](https://opencode.ai) configuration; primarily used to hand off Godot docs exploration tasks (see `CLAUDE.md`).
+- `.editorconfig` — editor-agnostic formatting rules.
+- `.vscode/settings.json` — points VSCode's Godot Tools extension at the local Godot mono binary. Update the path to match your environment.
+- `.claude/settings.local.json` — local Claude Code permissions and plugin enablement (gitignored).

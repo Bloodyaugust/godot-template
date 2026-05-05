@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@warp-dot-dev/opencode-warp"],
+  "lsp": {
+    "gdscript": {
+      "command": ["npx", "godot-lsp-stdio-bridge"],
+      "extensions": [".gd"]
+    }
+  }
+}
