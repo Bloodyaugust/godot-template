@@ -9,3 +9,15 @@
 position = Vector2(576, 324)
 texture = ExtResource("2_icon")
 script = ExtResource("1_player")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="QuitButton" type="Button" parent="UI"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 96.0
+offset_bottom = 48.0
+text = "Quit"
+metadata/agent_id = "main.quit"
+
+[connection signal="pressed" from="UI/QuitButton" to="Player" method="OnQuitPressed"]

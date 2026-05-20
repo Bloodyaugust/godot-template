@@ -43,4 +43,5 @@ A debug-build-only HTTP server (`scripts/server/AgentRestServer.cs`, registered 
 - `opencode.json` — [opencode](https://opencode.ai) configuration; primarily used to hand off Godot docs exploration tasks (see `CLAUDE.md`).
 - `.editorconfig` — editor-agnostic formatting rules.
 - `.vscode/settings.json` — points VSCode's Godot Tools extension at the local Godot mono binary. Update the path to match your environment.
-- `.claude/settings.local.json` — local Claude Code permissions and plugin enablement (gitignored).
+- `.claude/settings.json` — checked-in Claude Code permissions for common Godot / `dotnet` / debug-REST commands so first-run permission prompts stay out of the way. Extend in PRs when a useful command is missing.
+- `.claude/settings.local.json` — per-user overrides on top of the checked-in settings (gitignored).

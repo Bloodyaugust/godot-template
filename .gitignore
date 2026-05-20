@@ -6,3 +6,6 @@ docs/
 
 # Local tooling
 *.csproj.lscache
+
+# Claude Code per-user overrides (project allowlist lives in .claude/settings.json and is checked in)
+.claude/settings.local.json

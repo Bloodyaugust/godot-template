@@ -28,4 +28,6 @@ public partial class Player : Sprite2D, IAgentInspectable
     {
         ["speed"] = Speed,
     };
+
+    public void OnQuitPressed() => GetTree().Quit();
 }

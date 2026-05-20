@@ -15,6 +15,8 @@ public partial class AgentRestServer : Node
 {
     private const string DefaultPrefix = "http://127.0.0.1:8080/";
     private const long MaxBodyBytes = 65536;
+    private const string AgentIdMeta = "agent_id";
+    private const string AgentExampleGroup = "agent_example";
 
     private HttpListener _listener;
     private CancellationTokenSource _cts;
@@ -120,8 +122,8 @@ public partial class AgentRestServer : Node
             {
                 var resp = ctx.Response;
                 resp.StatusCode = pending.Result.StatusCode;
-                resp.ContentType = "application/json";
-                var bytes = Encoding.UTF8.GetBytes(pending.Result.Body);
+                resp.ContentType = pending.Result.ContentType;
+                var bytes = pending.Result.Body;
                 resp.ContentLength64 = bytes.Length;
                 await resp.OutputStream.WriteAsync(bytes, ct);
             }
@@ -144,6 +146,10 @@ public partial class AgentRestServer : Node
         if (method == "GET" && path == "/status") return HandleStatus();
         if (method == "POST" && path == "/input/action") return HandleInputAction(ctx.Request);
         if (method == "GET" && path == "/nodes") return HandleNodes(ctx.Request);
+        if (method == "GET" && path == "/screenshot") return HandleScreenshot(ctx.Request);
+        if (method == "GET" && path == "/ui/controls") return HandleUiControls();
+        if (method == "POST" && path == "/ui/press") return HandleUiPress(ctx.Request);
+        if (method == "GET" && path == "/example/state") return HandleExampleState();
         if ((method == "POST" || method == "GET") && path == "/quit") return HandleQuit(ctx.Request);
 
         return ResponseData.Error(404, $"unknown route {method} {path}");
@@ -169,25 +175,14 @@ public partial class AgentRestServer : Node
 
     private ResponseData HandleInputAction(HttpListenerRequest req)
     {
-        if (req.ContentLength64 > MaxBodyBytes)
-            return ResponseData.Error(413, "body too large");
-
-        string body;
-        using (var reader = new StreamReader(req.InputStream, req.ContentEncoding ?? Encoding.UTF8))
-            body = reader.ReadToEnd();
-
+        if (!TryReadJson(req, out var doc, out var err)) return err;
         string action;
         string mode;
-        try
+        using (doc)
         {
-            using var doc = JsonDocument.Parse(body);
             var root = doc.RootElement;
-            action = root.TryGetProperty("action", out var a) ? a.GetString() : null;
-            mode = root.TryGetProperty("mode", out var m) ? m.GetString() : null;
-        }
-        catch (JsonException ex)
-        {
-            return ResponseData.Error(400, "invalid json: " + ex.Message);
+            action = root.TryGetProperty("action", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() : null;
+            mode = root.TryGetProperty("mode", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() : null;
         }
 
         if (string.IsNullOrEmpty(action))
@@ -282,6 +277,171 @@ public partial class AgentRestServer : Node
         return ResponseData.Json(200, result);
     }
 
+    private ResponseData HandleScreenshot(HttpListenerRequest req)
+    {
+        var viewport = GetViewport();
+        if (viewport == null) return ResponseData.Error(500, "no viewport");
+
+        var texture = viewport.GetTexture();
+        if (texture == null) return ResponseData.Error(500, "no viewport texture");
+
+        var image = texture.GetImage();
+        if (image == null || image.IsEmpty())
+            return ResponseData.Error(500, "failed to read viewport image");
+
+        var format = (req.QueryString["format"] ?? "png").ToLowerInvariant();
+        byte[] bytes;
+        string contentType;
+        switch (format)
+        {
+            case "png":
+                bytes = image.SavePngToBuffer();
+                contentType = "image/png";
+                break;
+            case "jpg":
+            case "jpeg":
+            {
+                float quality = 0.75f;
+                var qStr = req.QueryString["quality"];
+                if (!string.IsNullOrEmpty(qStr))
+                {
+                    if (!float.TryParse(qStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out quality))
+                        return ResponseData.Error(400, $"invalid 'quality' value '{qStr}'");
+                    quality = Math.Clamp(quality, 0.01f, 1.0f);
+                }
+                bytes = image.SaveJpgToBuffer(quality);
+                contentType = "image/jpeg";
+                break;
+            }
+            case "webp":
+                bytes = image.SaveWebpToBuffer();
+                contentType = "image/webp";
+                break;
+            default:
+                return ResponseData.Error(400, $"unknown format '{format}' (expected png|jpg|webp)");
+        }
+
+        if (bytes == null || bytes.Length == 0)
+            return ResponseData.Error(500, "failed to encode screenshot");
+
+        return ResponseData.Binary(200, contentType, bytes);
+    }
+
+    // ---- UI agent-id routes -------------------------------------------------
+
+    private void CollectAgentControlsRecursive(Node node, List<BaseButton> result)
+    {
+        if (node == null || !IsInstanceValid(node)) return;
+        if (node is BaseButton btn && node.HasMeta(AgentIdMeta))
+            result.Add(btn);
+        foreach (var child in node.GetChildren())
+            CollectAgentControlsRecursive(child, result);
+    }
+
+    private List<BaseButton> CollectAgentControls()
+    {
+        var list = new List<BaseButton>();
+        var scene = GetTree()?.CurrentScene;
+        if (scene == null || !IsInstanceValid(scene)) return list;
+        CollectAgentControlsRecursive(scene, list);
+        return list;
+    }
+
+    private static Dictionary<string, object> SerializeAgentControl(BaseButton btn)
+    {
+        var entry = new Dictionary<string, object>
+        {
+            ["id"] = btn.GetMeta(AgentIdMeta).AsString(),
+            ["type"] = btn.GetType().Name,
+            ["disabled"] = btn.Disabled,
+            ["visible"] = btn.IsVisibleInTree(),
+        };
+        if (btn is Button b) entry["text"] = b.Text;
+        if (btn.ToggleMode) entry["pressed"] = btn.ButtonPressed;
+        return entry;
+    }
+
+    private ResponseData HandleUiControls()
+    {
+        var nodes = CollectAgentControls();
+        var result = new List<object>(nodes.Count);
+        foreach (var n in nodes) result.Add(SerializeAgentControl(n));
+        return ResponseData.Json(200, result);
+    }
+
+    private ResponseData HandleUiPress(HttpListenerRequest req)
+    {
+        if (!TryReadJson(req, out var doc, out var err)) return err;
+        using (doc)
+        {
+            string id = null;
+            if (doc.RootElement.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String)
+                id = idEl.GetString();
+            if (string.IsNullOrEmpty(id))
+                return ResponseData.Error(400, "missing or empty 'id'");
+
+            var nodes = CollectAgentControls();
+            var matches = new List<BaseButton>();
+            foreach (var n in nodes)
+            {
+                if (n.GetMeta(AgentIdMeta).AsString() == id) matches.Add(n);
+            }
+            if (matches.Count == 0)
+                return ResponseData.Error(404, $"no control with id '{id}'");
+            if (matches.Count > 1)
+                return ResponseData.Error(400, $"ambiguous id '{id}' matches {matches.Count} controls");
+
+            var btn = matches[0];
+            if (btn.Disabled) return ResponseData.Error(400, $"control '{id}' is disabled");
+            if (!btn.IsVisibleInTree()) return ResponseData.Error(400, $"control '{id}' is not visible");
+
+            if (btn.ToggleMode) btn.ButtonPressed = !btn.ButtonPressed;
+            btn.EmitSignal(BaseButton.SignalName.Pressed);
+
+            return ResponseData.Json(200, new Dictionary<string, object>
+            {
+                ["ok"] = true,
+                ["id"] = id,
+            });
+        }
+    }
+
+    // ---- Typed domain interface — Example stub -----------------------------
+    //
+    // Pattern for adding a typed domain surface (inventory, quest log, NPC dialogue,
+    // a level editor, etc.). To wire one up:
+    //
+    //   1. Copy `IAgentExample.cs` to `IAgent<YourDomain>.cs` and rename `GetExampleState`.
+    //   2. Implement it on the active scene controller; that controller calls
+    //      `AddToGroup("agent_<your_domain>")` in `_Ready`.
+    //   3. Add a `FindYourDomain()` helper + route group below, mirroring `FindExample` /
+    //      `HandleExampleState`. Mutation routes should return `{ok, state, error?}`
+    //      where `state` is the full snapshot after the operation.
+    //
+    // The /example/state route stays in the template as a self-documenting stub; you can
+    // delete it once you've added real domain routes.
+
+    private IAgentExample FindExample()
+    {
+        var tree = GetTree();
+        if (tree == null) return null;
+        foreach (var node in tree.GetNodesInGroup(AgentExampleGroup))
+        {
+            if (node is IAgentExample e && IsInstanceValid(node)) return e;
+        }
+        return null;
+    }
+
+    private ResponseData HandleExampleState()
+    {
+        var example = FindExample();
+        if (example == null)
+            return ResponseData.Error(503, $"no active example; expected a node in group '{AgentExampleGroup}' implementing IAgentExample");
+        return ResponseData.Json(200, example.GetExampleState());
+    }
+
+    // -------------------------------------------------------------------------
+
     private static Dictionary<string, object> SerializeNode(Node node)
     {
         var entry = new Dictionary<string, object>
@@ -320,6 +480,31 @@ public partial class AgentRestServer : Node
         return entry;
     }
 
+    private static bool TryReadJson(HttpListenerRequest req, out JsonDocument doc, out ResponseData errorResponse)
+    {
+        doc = null;
+        errorResponse = default;
+        if (req.ContentLength64 > MaxBodyBytes)
+        {
+            errorResponse = ResponseData.Error(413, "body too large");
+            return false;
+        }
+        string body;
+        using (var reader = new StreamReader(req.InputStream, req.ContentEncoding ?? Encoding.UTF8))
+            body = reader.ReadToEnd();
+        if (string.IsNullOrWhiteSpace(body)) body = "{}";
+        try
+        {
+            doc = JsonDocument.Parse(body);
+            return true;
+        }
+        catch (JsonException ex)
+        {
+            errorResponse = ResponseData.Error(400, "invalid json: " + ex.Message);
+            return false;
+        }
+    }
+
     private sealed class PendingRequest
     {
         public HttpListenerContext Context { get; }
@@ -332,18 +517,23 @@ public partial class AgentRestServer : Node
     private readonly struct ResponseData
     {
         public int StatusCode { get; }
-        public string Body { get; }
+        public string ContentType { get; }
+        public byte[] Body { get; }
 
-        private ResponseData(int code, string body)
+        private ResponseData(int code, string contentType, byte[] body)
         {
             StatusCode = code;
+            ContentType = contentType;
             Body = body;
         }
 
         public static ResponseData Json(int code, object payload)
-            => new(code, JsonSerializer.Serialize(payload, payload.GetType()));
+            => new(code, "application/json", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload, payload.GetType())));
 
         public static ResponseData Error(int code, string message)
-            => new(code, JsonSerializer.Serialize(new Dictionary<string, object> { ["error"] = message }));
+            => Json(code, new Dictionary<string, object> { ["error"] = message });
+
+        public static ResponseData Binary(int code, string contentType, byte[] body)
+            => new(code, contentType, body);
     }
 }
