@@ -45,3 +45,4 @@ A debug-build-only HTTP server (`scripts/server/AgentRestServer.cs`, registered 
 - `.vscode/settings.json` — points VSCode's Godot Tools extension at the local Godot mono binary. Update the path to match your environment.
 - `.claude/settings.json` — checked-in Claude Code permissions for common Godot / `dotnet` / debug-REST commands so first-run permission prompts stay out of the way. Extend in PRs when a useful command is missing.
 - `.claude/settings.local.json` — per-user overrides on top of the checked-in settings (gitignored).
+- `.claude/skills/extract-to-template/` — project-local Claude Code skill that audits the current project for reusable patterns and produces a prioritized proposal for contributing them back to this template. Invoke as `/extract-to-template <path-to-template-checkout>` from a project that was spun out of this template.
