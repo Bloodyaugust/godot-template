@@ -10,11 +10,9 @@ An opinionated Godot 4.6 Mono (C#) project template. Use as a starting point for
 ## Getting started
 
 1. Clone or copy this template into a new directory.
-2. Find-replace every instance of `godot-template` with your project name. Files affected:
-   - `godot-template.csproj` → rename to `<your-name>.csproj`
-   - `godot-template.sln` → rename to `<your-name>.sln`
-   - `project.godot` (`config/name`, `project/assembly_name`)
-   - `godot-template.csproj` `<RootNamespace>` (use a valid C# identifier, e.g. `mygame`)
+2. Rename the project. Either:
+   - **Recommended (Claude Code):** run `/eject [project-name]` from inside the new directory. The skill interviews you about the game, renames `.csproj` / `.sln` / `project.godot` / `<RootNamespace>`, rewrites `README.md` and `CLAUDE.md` to describe your project, swaps the demo scene for a minimal stub, and removes itself. See `.claude/skills/eject/`.
+   - **Manual:** find-replace every instance of `godot-template` with your project name across `godot-template.csproj` (rename + `<RootNamespace>`), `godot-template.sln` (rename), and `project.godot` (`config/name`, `project/assembly_name`).
 3. Open the project in Godot.
 4. Build the dotnet project from inside Godot (top-right hammer, left of the Play button) to populate `.godot/` and verify the toolchain is wired up.
 5. `dotnet build` from a shell to confirm a clean compile outside of Godot.
@@ -46,3 +44,4 @@ A debug-build-only HTTP server (`scripts/server/AgentRestServer.cs`, registered 
 - `.claude/settings.json` — checked-in Claude Code permissions for common Godot / `dotnet` / debug-REST commands so first-run permission prompts stay out of the way. Extend in PRs when a useful command is missing.
 - `.claude/settings.local.json` — per-user overrides on top of the checked-in settings (gitignored).
 - `.claude/skills/extract-to-template/` — project-local Claude Code skill that audits the current project for reusable patterns and produces a prioritized proposal for contributing them back to this template. Invoke as `/extract-to-template <path-to-template-checkout>` from a project that was spun out of this template.
+- `.claude/skills/eject/` — one-shot Claude Code skill that converts a fresh copy of this template into a starter for a new project: interviews you about the game, renames `.csproj` / `.sln` / `project.godot` / `<RootNamespace>`, rewrites `README.md` and `CLAUDE.md`, swaps the demo scene for a minimal stub, and deletes itself. Invoke as `/eject [project-name]` from inside the newly-copied project directory.
