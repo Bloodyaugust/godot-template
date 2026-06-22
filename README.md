@@ -1,10 +1,10 @@
 # godot-template
 
-An opinionated Godot 4.6 Mono (C#) project template. Use as a starting point for game jams, prototypes, or small projects.
+An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for game jams, prototypes, or small projects.
 
 ## Dependencies
 
-- Godot 4.6 mono
+- Godot 4.7 mono
 - `dotnet` CLI (.NET 8 SDK; .NET 9 if targeting Android)
 
 ## Getting started

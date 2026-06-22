@@ -1,4 +1,4 @@
-This is a Godot 4.6 Mono (C#) game project. Read the root @README.md for a human-centric description of the game.
+This is a Godot 4.7 Mono (C#) game project. Read the root @README.md for a human-centric description of the game.
 
 Update this file whenever major architectural changes occur.
 

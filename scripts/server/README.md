@@ -34,7 +34,7 @@ Keep new routes consistent with these shapes so a single client helper can handl
 Sanity check.
 
 ```json
-{ "running": true, "scene": "/root/Main", "godot_version": "4.6.x" }
+{ "running": true, "scene": "/root/Main", "godot_version": "4.7.x" }
 ```
 
 ### `POST /input/action`
