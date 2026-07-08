@@ -39,6 +39,8 @@ Common slice categories (adapt to the project at hand):
 7. **Code conventions** — namespace ↔ directory rules, per-subdir `README.md` discipline, ideas/design-notes flow, registries (z-index, layers, groups, etc.) as a *pattern*.
 8. **Build / test / CI** — build scripts, pre-commit hooks, CI workflows, test harness conventions, lint config.
 
+This category list is a starting set, **not exhaustive**. The top-level inventory is the real source of slices: walk `SOURCE_ROOT`'s top-level directories and standing documents, and give anything the categories above don't cover (e.g. a design-doc tree, localization assets, tooling scripts, data pipelines) its own slice — or fold it into a related one — rather than skipping it because it isn't listed here.
+
 For each slice, the subagent should:
 
 - Read the relevant files in `SOURCE_ROOT` (including any in-scope `README.md`s).
