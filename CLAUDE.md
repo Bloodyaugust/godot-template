@@ -20,7 +20,7 @@ rm /tmp/godot-docs.zip
 After making code changes, before reporting the work as done:
 
 1. **Compile.** Run `dotnet build` and resolve any errors/warnings introduced by the change.
-2. **Agentic functional test.** Boot the game with `godot-mono` and exercise the changed behavior through the `AgentRestServer` REST interface (default `http://127.0.0.1:8080/`; endpoints documented below and in `scripts/server/README.md`). The goal is to confirm that the basic flow works end-to-end and that no regressions were introduced in adjacent features — not to evaluate balance or feel.
+2. **Agentic functional test.** Boot the game with `godot-mono` and exercise the changed behavior through the `AgentRestServer` REST interface (default `http://127.0.0.1:8080/`; endpoints documented below and in `scripts/server/README.md`). The goal is to confirm that the basic flow works end-to-end and that no regressions were introduced in adjacent features — not to evaluate balance or feel. **For anything beyond a single request, write or extend a Hurl test in `tests/hurl/` instead of hand-driving `curl`** — see *Scripted agentic tests (Hurl)* below.
 3. **Extend the REST surface when needed.** If a new feature isn't reachable via the existing endpoints, extending `AgentRestServer` (new route, new `agent_id` on a button, new `IAgentInspectable` properties, new typed domain interface, etc.) is part of the implementation, not a follow-up. The bar is: any functionality that doesn't inherently require human eyes (visuals, feel, balance) must be agent-testable. Update the endpoint table in this file when you add or change routes.
 4. **Identify human-only verification.** Anything the agent genuinely can't assess — visual polish, animation/timing feel, audio, balance/difficulty tuning, subjective gameplay interactions — gets handed back to the user.
 5. **Clean up only the game instance you launched — never a blanket process kill.** Shut the test instance down with `POST /quit` (or `GET /quit` on Windows HTTP.sys). That is the *only* approved teardown: `/quit` is reachable solely through the running game's `AgentRestServer`, so it can never touch anything else. Confirm teardown by checking the **server is gone** (`/status` no longer responds), not by listing processes. Leaving an instance up ties up port 8080, blocks the next boot's `AgentRestServer` registration, and leaves stale background tasks. Tear down before reporting work done — including on failure paths.
@@ -28,6 +28,24 @@ After making code changes, before reporting the work as done:
    **Do NOT kill `godot-mono` processes by name.** The developer normally has the Godot **editor** open, which is *also* a `godot-mono` process; `Get-Process godot-mono | Stop-Process`, `taskkill /im godot-mono`, `pkill godot-mono`, and the like will destroy their editor session. Seeing a leftover `godot-mono` in the task list after `/quit` returns `200` almost always means you're looking at the editor — leave it alone. If (and only if) a *game instance you launched* genuinely refuses to quit via `/quit`, kill that one **specific PID** — the one captured when you spawned it (`echo $!` / the launch command's reported pid) — and nothing else.
 
 The `godot-mono` binary is expected to be on `PATH`. Use it directly for headless or windowed runs (e.g. `godot-mono --path .` to boot the configured main scene). Note that this command **launches a fresh game process** independent of any editor the developer has open — it does not attach to or disturb their editor.
+
+### Scripted agentic tests (Hurl)
+
+`tests/hurl/` holds [Hurl](https://hurl.dev) scenarios — plain-text HTTP scripts that drive a booted game through the REST interface. **Prefer writing a Hurl test over manually issuing a sequence of REST calls.** The game is a live `_Process` simulation: when you hand-drive `curl`, the world moves between your calls and you race it. A Hurl scenario is authored once, run with one command, and its `retry`/`retry-interval` options **wait on game state** (poll until the asserts pass) instead of guessing timing — faster, re-runnable, and stable.
+
+Run them with the wrapper (boots a fresh headless instance per file, guarantees teardown even on failure):
+
+```sh
+tests/hurl/run-tests.ps1                 # all files, headless   (-Windowed to watch)
+tests/hurl/run-tests.ps1 smoke.hurl      # one file
+tests/hurl/run-tests.sh                  # bash equivalent (WINDOWED=1 to watch)
+```
+
+Or iterate against an already-booted game: `hurl --test --jobs 1 --variable host=127.0.0.1:8080 --error-format long tests/hurl/<file>.hurl`.
+
+The authoring idiom and the non-obvious rules (retry *is* the wait; keep mutations and polls in separate entries; capture ids/coordinates — never hardcode runtime-generated values; assert the *positive* form of a JSONPath `count`; use the `GET` aliases for bodyless calls) live in `tests/hurl/README.md`. Read it before adding a scenario.
+
+**If `hurl` is not detected** when you go to run a test, install it, then retry — Windows: `winget install --id Orange-OpenSource.Hurl` (binary lands at `C:\Program Files\Hurl\hurl.exe`; may not be on the current shell's `PATH` until a new shell — the runners fall back to that path); macOS: `brew install hurl`; Linux/other: https://hurl.dev/docs/installation.html.
 
 ### End-of-session report
 

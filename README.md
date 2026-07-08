@@ -6,6 +6,7 @@ An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for
 
 - Godot 4.7 mono
 - `dotnet` CLI (.NET 8 SDK; .NET 9 if targeting Android)
+- [Hurl](https://hurl.dev) — runs the scripted agentic REST tests in `tests/hurl/` (verification only; not needed to build or play)
 
 ## Getting started
 
@@ -27,12 +28,15 @@ An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for
 | `shaders/` | `.gdshader` files. |
 | `sprites/` | Sprite images and their `.import` sidecars (individual sprites and packed atlases). |
 | `ideas/` | Markdown design notes for in-flight features; move completed ones to `ideas/done/`. |
+| `tests/` | Automated tests. `tests/hurl/` holds [Hurl](https://hurl.dev) REST scenarios that drive a booted game for agentic verification. |
 
 Each non-gitignored subdirectory should carry its own `README.md` describing its contents.
 
 ## Agent REST interface
 
 A debug-build-only HTTP server (`scripts/server/AgentRestServer.cs`, registered as an autoload) lets external agents drive a running game — trigger input actions and query nodes by group. Defaults to `http://127.0.0.1:8080/`, override with the `GODOT_AGENT_REST_PREFIX` env var. See `scripts/server/README.md` for endpoint details and `curl` examples. The shipped `scenes/main.tscn` is a small demo scene wired up to verify the surface end-to-end.
+
+Multi-step flows are scripted as [Hurl](https://hurl.dev) scenarios in `tests/hurl/`, which drive this interface and wait on game state rather than racing the live simulation — see `tests/hurl/README.md`.
 
 ## Tooling
 
