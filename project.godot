@@ -22,7 +22,6 @@ AgentRestServer="*res://scripts/server/AgentRestServer.cs"
 
 [display]
 
-window/stretch/mode="canvas_items"
 window/dpi/allow_hidpi=true
 
 [dotnet]

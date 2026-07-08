@@ -145,6 +145,8 @@ When the durable profile grows disk persistence, follow these four rules (proven
 ### UI Panels
 Always define UI panel structure in a `.tscn` file, not entirely in C#. Control anchor/offset layout is baked into the scene before nodes enter the tree; setting anchors in `_Ready()` runs after the first layout pass and produces incorrect positioning (e.g., centered panels appear in the top-left corner). The C# controller should only wire up signals and build dynamic content (cards, rows) via `GetNode<T>("%UniqueName")`.
 
+**Design layouts responsive to the real window size** — anchors, containers, and size flags against whatever space actually exists, not a fixed design resolution. The project deliberately keeps the default `disabled` stretch mode: the viewport always matches the window, and hi-dpi/accessibility sizing is handled by the `DisplayScale` autoload scaling the canvas (`ContentScaleFactor`) on top of responsive layout. Do not switch to the `canvas_items`/`viewport` stretch modes to sidestep multi-resolution layout — a fixed design size is a crutch that breaks down across aspect ratios and compounds badly with DPI scaling.
+
 ### Key Patterns
 - **IsInstanceValid**: always use to check freed Godot objects; C# null checks are insufficient.
 - **Namespaces mirror directory structure**: a script in `scripts/foo/` belongs in namespace `<RootNamespace>.Foo` (where `<RootNamespace>` is set in the `.csproj`, e.g. `godottemplate.Foo`). Keeps code navigation predictable.

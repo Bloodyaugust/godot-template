@@ -5,12 +5,20 @@ using godottemplate.Server;
 namespace godottemplate.UI;
 
 /// <summary>
-/// Global hi-dpi UI scale. Sets the main window's <see cref="Window.ContentScaleFactor"/>
-/// so the entire GUI + 2D canvas renders larger on high-density displays, where the
-/// baked-in pixel sizes (font sizes, panel/button dimensions, margins) are otherwise too
-/// small to read. Pairs with <c>display/window/stretch/mode = canvas_items</c> set in
-/// <c>project.godot</c>; the content scale re-rasterizes vector content at the larger size
-/// rather than bitmap-stretching, so text stays crisp.
+/// Global hi-dpi / accessibility UI scale. Sets the main window's
+/// <see cref="Window.ContentScaleFactor"/> so the entire GUI + 2D canvas renders larger
+/// on high-density displays, where the baked-in pixel sizes (font sizes, panel/button
+/// dimensions, margins) are otherwise too small to read. Uses the default
+/// <c>disabled</c> stretch mode — the engine-documented approach for DPI-aware scaling:
+/// the viewport keeps tracking the real window size (so anchors/containers keep laying
+/// out against actual available space) while the factor scales the canvas, re-rasterizing
+/// fonts and vector content at the larger size so text stays crisp.
+///
+/// This is an accessibility/legibility knob, NOT a responsive-layout mechanism. Do not
+/// switch the project to a fixed-design-size stretch mode (<c>canvas_items</c>/<c>viewport</c>)
+/// to avoid designing layouts for more than one window size — UI must remain
+/// anchor/container-responsive to arbitrary window sizes, and a fixed design size
+/// compounds badly with this factor on hi-dpi monitors.
 ///
 /// On startup it derives an automatic factor from the monitor (<see cref="DisplayServer.ScreenGetScale"/>,
 /// falling back to <see cref="DisplayServer.ScreenGetDpi"/> / 96), snapped to quarter steps

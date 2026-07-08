@@ -1,7 +1,6 @@
 # Display-scale + synthetic-click scenario against the demo scene: round-trip the
-# /display/* typed surface (set an override, return to auto), then pin the scale to
-# 1.0 so viewport pixels are deterministic and quit the game by CLICKING the demo
-# QuitButton — /input/click flows through the real GUI pipeline, so the instance
+# /display/* typed surface (set an override, return to auto), then quit the game by
+# CLICKING the demo QuitButton — /input/click flows through the real GUI pipeline, so the instance
 # exiting on its own (the runner finds /status gone without force-quitting) is the
 # end-to-end proof the click landed.
 
@@ -48,7 +47,8 @@ HTTP 400
 jsonpath "$.ok" == false
 jsonpath "$.error" exists
 
-# ── 5. Pin scale to 1.0 so the button's viewport pixels are deterministic ─────
+# ── 5. Pin an explicit 1.0 (click coords are content-space and scale-invariant;
+#       the pin is belt-and-braces determinism + one more set-path exercise) ───
 POST http://{{host}}/display/set
 { "factor": 1.0 }
 HTTP 200
