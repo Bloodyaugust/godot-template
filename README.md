@@ -41,6 +41,7 @@ Multi-step flows are scripted as [Hurl](https://hurl.dev) scenarios in `tests/hu
 ## Tooling
 
 - `CLAUDE.md` — instructions for [Claude Code](https://claude.com/claude-code).
+- `HANDOFF.md` — opt-in session-to-session handoff brief: what the last work session shipped and what the next one should pick up. Only used when a human explicitly asks for the handoff flow; see the header inside the file.
 - `AGENTS.md` — symlink-style pointer for agentic CLI tools that look up `AGENTS.md` instead of `CLAUDE.md`.
 - `opencode.json` — [opencode](https://opencode.ai) configuration; primarily used to hand off Godot docs exploration tasks (see `CLAUDE.md`).
 - `.editorconfig` — editor-agnostic formatting rules.
