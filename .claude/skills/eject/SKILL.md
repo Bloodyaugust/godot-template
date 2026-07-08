@@ -75,7 +75,7 @@ Print a concise summary block:
 - New project name and namespace.
 - Files to rename (csproj, sln, csproj.uid if present).
 - Files to edit (`project.godot`, csproj, sln, every `.cs` file containing
-  `godottemplate`, `README.md`, `CLAUDE.md`).
+  `godottemplate`, `README.md`, `CLAUDE.md`, `tests/hurl/smoke.hurl`).
 - Files to delete (`scripts/test/`, `.claude/skills/eject/`).
 - Files to create (new `scenes/main.tscn`, plus any companion script for the
   QuitButton wiring).
@@ -122,6 +122,11 @@ Known starting points (verify with Grep, do not assume exhaustive):
 - `scripts/server/AgentRestServer.cs`
 - `scripts/server/IAgentExample.cs`
 - `scripts/server/IAgentInspectable.cs`
+- `scripts/server/IAgentDisplay.cs`
+- `scripts/ui/DisplayScale.cs`, `scripts/ui/GameScenes.cs`, `scripts/ui/Palette.cs`
+- `scripts/content/ContentLoader.cs`, `scripts/content/DefReader.cs`,
+  `scripts/content/ContentException.cs`
+- `scripts/util/Ranges.cs`
 
 ### 5.6 Swap the demo scene
 
@@ -137,6 +142,14 @@ Implement the handler as a tiny C# script `scripts/main/Main.cs` (namespace
 `<CHOSEN_NAMESPACE>.Main`) that calls `GetTree().Quit()` and is set as the
 script on the root node of the scene. Add a `scripts/main/README.md`
 describing the directory (one short paragraph).
+
+`scripts/ui/GameScenes.cs` already points its `MainMenu` constant at
+`res://scenes/main.tscn`, so no change is needed there.
+
+Also trim `tests/hurl/smoke.hurl` to match the stub: the demo `Player` is
+being deleted in 5.7, so remove the `/nodes?group=player` entry (keep the
+boot-wait `/status` entry, the `/ui/controls` assert on `main.quit`, and the
+closing `/ui/press` teardown).
 
 The smoke-test bar: `GET /ui/controls` lists `main.quit` and
 `POST /ui/press {"id":"main.quit"}` terminates the process.
@@ -158,11 +171,14 @@ interview. Required sections, in order:
 - **Getting started** — trim to just the post-clone steps: open in Godot,
   build via the Godot hammer, then `dotnet build` from a shell. The rename
   step is no longer relevant.
-- **Folder structure** — copy the table from the template README.
-- **Agent REST interface** — copy the paragraph from the template README.
+- **Folder structure** — copy the table from the template README (it includes
+  the `tests/` row).
+- **Agent REST interface** — copy the section from the template README,
+  including the Hurl-scenarios paragraph.
 - **Tooling** — copy the entries from the template README *except* the
   `/eject` bullet (which is being deleted in this run). Keep the
-  `extract-to-template` bullet — it's still useful in the spun-out project.
+  `extract-to-template` bullet — it's still useful in the spun-out project —
+  and the `HANDOFF.md` bullet.
 
 ### 5.9 Edit `CLAUDE.md`
 
@@ -191,13 +207,15 @@ mutation, after every other change has been written to disk.
 1. `dotnet build` — must succeed. If it fails, surface the error verbatim and
    stop. Do not try to fix compilation errors inline; the user will read the
    diff and decide.
-2. Boot the game briefly with `godot-mono --path . --headless` (or windowed,
-   in the background) and confirm `GET /status` returns 200 and
-   `GET /ui/controls` lists `main.quit`. Then `POST /ui/press` with
-   `{"id":"main.quit"}` (or `GET /quit` as fallback) to tear down the
-   instance. Per the project's CLAUDE.md cleanup rule, never leave a
-   `godot-mono` process running after the skill exits — including on error
-   paths.
+2. Run the Hurl smoke through the wrapper — `tests/hurl/run-tests.ps1
+   smoke.hurl` (or `run-tests.sh`) — which boots a fresh headless instance,
+   drives `/status` → `/ui/controls` → `/ui/press main.quit`, and guarantees
+   teardown. If `hurl` isn't installed, fall back to booting with
+   `godot-mono --path . --headless` and hand-driving those three calls with
+   `curl` (`GET /quit` as the fallback teardown). Per the project's CLAUDE.md
+   cleanup rule, never leave a game instance you launched running after the
+   skill exits — including on error paths — and never kill `godot-mono` by
+   name.
 
 ## Phase 7 — Report
 
@@ -223,5 +241,7 @@ themselves.
   output.
 - **Do not change `.claude/settings.json`.** Its permissions remain valid
   under the new project name.
+- **Do not modify `HANDOFF.md`.** It ships generic with empty placeholder
+  sections; the new project uses it as-is.
 - **Do not modify `.claude/skills/extract-to-template/`.** It is still useful
   in the ejected project.
