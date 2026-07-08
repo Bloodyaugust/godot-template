@@ -69,6 +69,7 @@ Endpoints:
 |---|---|---|
 | `GET` | `/status` | Sanity check; returns running flag, current scene path, Godot version. |
 | `POST` | `/input/action` | Body `{"action": "<name>", "mode": "press"\|"release"\|"tap"}`. `tap` auto-releases after one `_Process` frame. |
+| `POST` | `/input/click` | Body `{"x": <px>, "y": <px>, "button": "left"\|"right"\|"middle"}`. Synthetic mouse click at a viewport pixel — warps the mouse, then a press+release through the real GUI/`_unhandled_input` pipeline. |
 | `GET` | `/nodes?group=<name>` | Returns `[ {path, name, type, position?, properties?}, ... ]` for nodes in the named group. |
 | `GET` | `/screenshot` | Captures the main viewport and returns raw image bytes (`image/png` by default). Optional `?format=png\|jpg\|webp` and `?quality=<0.01-1.0>` (jpg only). No filesystem write on the game side. |
 | `GET` | `/ui/controls` | Lists every `BaseButton` in the current scene whose `agent_id` metadata is set: `[{id, type, text?, disabled, visible, pressed?}]`. |

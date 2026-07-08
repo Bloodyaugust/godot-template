@@ -145,6 +145,7 @@ public partial class AgentRestServer : Node
 
         if (method == "GET" && path == "/status") return HandleStatus();
         if (method == "POST" && path == "/input/action") return HandleInputAction(ctx.Request);
+        if (method == "POST" && path == "/input/click") return HandleInputClick(ctx.Request);
         if (method == "GET" && path == "/nodes") return HandleNodes(ctx.Request);
         if (method == "GET" && path == "/screenshot") return HandleScreenshot(ctx.Request);
         if (method == "GET" && path == "/ui/controls") return HandleUiControls();
@@ -213,6 +214,66 @@ public partial class AgentRestServer : Node
         }
 
         return ResponseData.Json(200, new Dictionary<string, object> { ["ok"] = true });
+    }
+
+    // Injects a synthetic mouse click at a viewport pixel so agents can exercise the
+    // human input path (click-to-select, placement commit) that bypasses /ui and the
+    // typed domain routes. Warps the mouse first so handlers reading
+    // GetGlobalMousePosition() see the clicked point, then parses a press+release that
+    // flows through the normal GUI -> _unhandled_input pipeline like a real click.
+    private ResponseData HandleInputClick(HttpListenerRequest req)
+    {
+        if (!TryReadJson(req, out var doc, out var err)) return err;
+
+        float x, y;
+        string button = "left";
+        using (doc)
+        {
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("x", out var xe) || xe.ValueKind != JsonValueKind.Number)
+                return ResponseData.Error(400, "missing or non-numeric 'x'");
+            if (!root.TryGetProperty("y", out var ye) || ye.ValueKind != JsonValueKind.Number)
+                return ResponseData.Error(400, "missing or non-numeric 'y'");
+            x = xe.GetSingle();
+            y = ye.GetSingle();
+            if (root.TryGetProperty("button", out var be) && be.ValueKind == JsonValueKind.String)
+                button = be.GetString();
+        }
+
+        MouseButton index = button switch
+        {
+            "right" => MouseButton.Right,
+            "middle" => MouseButton.Middle,
+            "left" => MouseButton.Left,
+            _ => MouseButton.None,
+        };
+        if (index == MouseButton.None)
+            return ResponseData.Error(400, $"unknown button '{button}' (expected left|right|middle)");
+
+        var pos = new Vector2(x, y);
+        Input.WarpMouse(pos);
+        Input.ParseInputEvent(new InputEventMouseButton
+        {
+            ButtonIndex = index,
+            Pressed = true,
+            Position = pos,
+            GlobalPosition = pos,
+        });
+        Input.ParseInputEvent(new InputEventMouseButton
+        {
+            ButtonIndex = index,
+            Pressed = false,
+            Position = pos,
+            GlobalPosition = pos,
+        });
+
+        return ResponseData.Json(200, new Dictionary<string, object>
+        {
+            ["ok"] = true,
+            ["x"] = x,
+            ["y"] = y,
+            ["button"] = button,
+        });
     }
 
     private ResponseData HandleQuit(HttpListenerRequest req)

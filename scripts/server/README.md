@@ -57,6 +57,33 @@ Responses:
 - `400 {"error": "..."}` for unknown action, unknown mode, missing field, or invalid JSON
 - `413 {"error": "body too large"}` if the body exceeds 64 KB
 
+### `POST /input/click`
+
+Injects a synthetic mouse click at a viewport pixel — for exercising the **human
+input path** that bypasses `/ui/*` and the typed domain routes (e.g. click-to-select
+an actor, committing a placement, right-click to cancel).
+
+```json
+{ "x": 687.6, "y": 324, "button": "left" }
+```
+
+`button` is `left` (default), `right`, or `middle`. The handler warps the mouse to
+`(x, y)` first (so handlers reading `GetGlobalMousePosition()` see the clicked point),
+then parses a press + release that flows through the normal GUI → `_unhandled_input`
+pipeline exactly like a real click — so `Control`s with `mouse_filter = Stop` still
+block clicks from reaching the world behind them.
+
+Coordinates are **viewport pixels**. To click a *world* position in a game with a
+moving camera, expose the camera position, zoom, and viewport size through a typed
+domain route and map world → screen on the client:
+
+```
+screen = viewport_size / 2 + (world - camera_pos) * zoom
+```
+
+Responses: `200 {"ok": true, "x", "y", "button"}`; `400` for a missing/non-numeric
+coordinate or an unknown button.
+
 ### `GET /screenshot`
 
 Captures the current main viewport as an image and returns the raw encoded bytes — nothing is written to the game's filesystem. Optional query params:
