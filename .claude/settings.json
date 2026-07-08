@@ -9,7 +9,9 @@
       "Bash(curl http://127.0.0.1:8080/*)",
       "Bash(curl -s http://127.0.0.1:8080/*)",
       "Bash(curl -X POST http://127.0.0.1:8080/*)",
-      "Bash(curl -X GET http://127.0.0.1:8080/*)"
+      "Bash(curl -X GET http://127.0.0.1:8080/*)",
+      "Bash(hurl:*)",
+      "Bash(tests/hurl/run-tests.sh:*)"
     ],
     "deny": []
   }
