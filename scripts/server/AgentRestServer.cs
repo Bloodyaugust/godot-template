@@ -17,6 +17,7 @@ public partial class AgentRestServer : Node
     private const long MaxBodyBytes = 65536;
     private const string AgentIdMeta = "agent_id";
     private const string AgentExampleGroup = "agent_example";
+    private const string AgentDisplayGroup = "agent_display";
 
     private HttpListener _listener;
     private CancellationTokenSource _cts;
@@ -151,6 +152,8 @@ public partial class AgentRestServer : Node
         if (method == "GET" && path == "/ui/controls") return HandleUiControls();
         if (method == "POST" && path == "/ui/press") return HandleUiPress(ctx.Request);
         if (method == "GET" && path == "/example/state") return HandleExampleState();
+        if (method == "GET" && path == "/display/state") return HandleDisplayState();
+        if (method == "POST" && path == "/display/set") return HandleDisplaySet(ctx.Request);
         if ((method == "POST" || method == "GET") && path == "/quit") return HandleQuit(ctx.Request);
 
         return ResponseData.Error(404, $"unknown route {method} {path}");
@@ -499,6 +502,60 @@ public partial class AgentRestServer : Node
         if (example == null)
             return ResponseData.Error(503, $"no active example; expected a node in group '{AgentExampleGroup}' implementing IAgentExample");
         return ResponseData.Json(200, example.GetExampleState());
+    }
+
+    // ---- Typed domain interface — Display (global UI scale) ----------------
+    //
+    // Unlike the scene-controller-backed /example pattern, this surface is backed by
+    // the DisplayScale AUTOLOAD, so it is always present for the whole process and
+    // never 503s in practice — the canonical example of an always-present typed surface.
+
+    private IAgentDisplay FindDisplay()
+    {
+        var tree = GetTree();
+        if (tree == null) return null;
+        foreach (var node in tree.GetNodesInGroup(AgentDisplayGroup))
+        {
+            if (node is IAgentDisplay d && IsInstanceValid(node)) return d;
+        }
+        return null;
+    }
+
+    private const string NoDisplayError = "no display surface; expected the DisplayScale autoload in group 'agent_display' implementing IAgentDisplay";
+
+    private ResponseData HandleDisplayState()
+    {
+        var display = FindDisplay();
+        if (display == null) return ResponseData.Error(503, NoDisplayError);
+        return ResponseData.Json(200, display.GetDisplayState());
+    }
+
+    private ResponseData HandleDisplaySet(HttpListenerRequest req)
+    {
+        var display = FindDisplay();
+        if (display == null) return ResponseData.Error(503, NoDisplayError);
+        if (!TryReadJson(req, out var doc, out var err)) return err;
+
+        float? factor = null;
+        bool auto = false;
+        using (doc)
+        {
+            var root = doc.RootElement;
+            if (root.TryGetProperty("factor", out var fe) && fe.ValueKind == JsonValueKind.Number)
+                factor = fe.GetSingle();
+            if (root.TryGetProperty("auto", out var ae) &&
+                (ae.ValueKind == JsonValueKind.True || ae.ValueKind == JsonValueKind.False))
+                auto = ae.GetBoolean();
+        }
+
+        var result = display.SetScale(factor, auto);
+        var payload = new Dictionary<string, object>
+        {
+            ["ok"] = result.ok,
+            ["state"] = display.GetDisplayState(),
+        };
+        if (!result.ok) payload["error"] = result.error;
+        return ResponseData.Json(result.ok ? 200 : 400, payload);
     }
 
     // -------------------------------------------------------------------------

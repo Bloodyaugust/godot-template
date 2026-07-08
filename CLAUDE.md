@@ -75,6 +75,8 @@ Endpoints:
 | `GET` | `/ui/controls` | Lists every `BaseButton` in the current scene whose `agent_id` metadata is set: `[{id, type, text?, disabled, visible, pressed?}]`. |
 | `POST` | `/ui/press` | Body `{"id": "<agent_id>"}`. Emits the button's `Pressed` signal (toggles flip `ButtonPressed` first). `400` if disabled / hidden / ambiguous; `404` if not found. |
 | `GET` | `/example/state` | Stub demonstrating the typed domain-interface pattern: looks up an `IAgentExample` implementer in the `agent_example` group and returns its state. See `scripts/server/IAgentExample.cs` for the pattern to copy when adding real domain surfaces (inventory, quest log, NPCs, etc.). |
+| `GET` | `/display/state` | Snapshot of the global UI scale (`DisplayScale` autoload, group `agent_display`): effective/auto factors, override flag, monitor scale/DPI. Always present — never 503s. |
+| `POST` | `/display/set` | Body `{"factor": <1.0-3.0>}` or `{"auto": true}`. Sets or clears the UI-scale override; returns the `{ok, state, error?}` envelope. |
 | `POST` or `GET` | `/quit` | Optional `?code=<int>` query (or JSON body `{"code": <int>}` on POST). Calls `GetTree().Quit(code)` after a 5-frame delay so the response flushes first. `GET` is accepted because Windows HTTP.sys rejects bodyless POSTs with 411. |
 
 Per-node JSON includes `position` for `Node2D`/`Node3D` and a `properties` object for nodes that implement `godottemplate.Server.IAgentInspectable` (`scripts/server/IAgentInspectable.cs`). Implementers return a `Dictionary<string, object>` of extra fields. The HTTP listener runs on a background task; all handlers execute on the main thread inside `_Process` so they may freely touch the scene tree. See `scripts/server/README.md` for examples.
@@ -110,8 +112,13 @@ For richer surfaces than buttons — an inventory, a shop, a quest journal, a le
 
 This keeps domain logic out of the server file: the server only knows how to look the implementer up and serialize its state.
 
+Two variants of the pattern ship as working examples:
+
+- **Scene-controller-backed** (`/example/state` + `IAgentExample`): the implementer is the active scene's controller, so the surface exists only while that scene is up — routes return `503` otherwise. Use for per-screen domains (a mission, a shop, an editor).
+- **Autoload-backed, always present** (`/display/*` + `IAgentDisplay` on the `DisplayScale` autoload): the implementer lives for the whole process, so the surface never 503s. Use for global, process-lifetime domains (display settings, audio, save slots).
+
 ### Directory Layout
-- `scripts/` — C# game logic. Add subdirectories per system (e.g. `units/`, `world/`, `ui/`) as the project grows; the template keeps it flat. Stateless cross-system helpers go in `scripts/util/`.
+- `scripts/` — C# game logic. Add subdirectories per system (e.g. `units/`, `world/`) as the project grows. Shared UI scaffolding (scene-path registry, palette, display scale) lives in `scripts/ui/`; stateless cross-system helpers go in `scripts/util/`.
 - `scenes/` — `.tscn` scene files, mirroring the structure of `scripts/`.
 - `resources/` — `.tres` content files (`[GlobalClass]` Resource subclasses). See `resources/README.md` for the C# `.tres` format requirements.
 - `shaders/` — `.gdshader` files.
@@ -126,7 +133,7 @@ Always define UI panel structure in a `.tscn` file, not entirely in C#. Control 
 - **Namespaces mirror directory structure**: a script in `scripts/foo/` belongs in namespace `<RootNamespace>.Foo` (where `<RootNamespace>` is set in the `.csproj`, e.g. `godottemplate.Foo`). Keeps code navigation predictable.
 - **Z-index registry**: when introducing layered 2D objects, document the z-index assignments here so future code follows the same registry.
 - **Collision layers**: when introducing physics interactions, document the layer/mask assignments here.
-- **Groups**: when introducing scene-tree groups (gameplay membership, REST domain-interface lookup, etc.), document the names here. The template uses `player` (demo) and `agent_example` (typed-interface stub) out of the box.
+- **Groups**: when introducing scene-tree groups (gameplay membership, REST domain-interface lookup, etc.), document the names here. The template uses `player` (demo), `agent_example` (typed-interface stub), and `agent_display` (the `DisplayScale` autoload, `/display/*` — always present) out of the box.
 - **Resource references**: prefer exported `PackedScene`/resource references on scene roots, or a small content registry resource, over hardcoding `GD.Load<T>(...)` paths in runtime classes. See `resources/README.md` for the C# `.tres` script-binding requirements.
 
 ## Local Godot Docs

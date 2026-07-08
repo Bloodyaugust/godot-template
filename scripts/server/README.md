@@ -200,6 +200,44 @@ curl -X POST http://127.0.0.1:8080/ui/press \
 
 See `IAgentExample.cs` for step-by-step instructions on copying the pattern into a real domain surface (inventory, quest log, level editor, NPC dialogue, etc.) — the comments there are the canonical reference. Delete the stub once you've added at least one real domain interface.
 
+### `/display/*` — global UI scale (typed domain interface)
+
+The hi-dpi UI scale, backed by the `DisplayScale` autoload (group `agent_display`,
+`IAgentDisplay` — see `scripts/ui/README.md`). Because the autoload runs for the whole
+process, these routes are **always available** — the canonical example of an
+*always-present* typed surface, in contrast to scene-controller-backed surfaces (like
+`/example/state`) that return `503` when their scene isn't active.
+
+#### `GET /display/state`
+
+```json
+{
+  "factor": 2.75,         // effective ContentScaleFactor (override if set, else auto)
+  "auto_factor": 2.75,    // monitor-derived value computed at startup
+  "has_override": false,  // whether an explicit override is active
+  "applied": 2.75,        // the value actually on the window (sanity check)
+  "screen": 0,
+  "screen_scale": 1.0,    // DisplayServer.ScreenGetScale (often 1.0 on X11)
+  "screen_dpi": 254,      // DisplayServer.ScreenGetDpi (drives the fallback)
+  "min_factor": 1.0,
+  "max_factor": 3.0,
+  "max_auto_factor": 2.0
+}
+```
+
+#### `POST /display/set`
+
+Set the UI scale. Supply **either** an explicit `factor` **or** `auto`:
+
+```sh
+curl -X POST http://127.0.0.1:8080/display/set -d '{"factor": 2.0}'   # explicit override (snapped to 0.25, clamped 1.0–3.0)
+curl -X POST http://127.0.0.1:8080/display/set -d '{"auto": true}'    # clear override, follow the monitor
+```
+
+Returns the `{ok, state, error?}` envelope. `400` when neither field is supplied or
+`factor` is out of the `[min_factor, max_factor]` range. The change applies to the live
+window immediately (scales GUI + 2D canvas together).
+
 ### `POST /quit` (also accepts `GET`)
 
 Stops the running game. Body and query are both optional:
