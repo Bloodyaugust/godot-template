@@ -253,22 +253,40 @@ public partial class AgentRestServer : Node
         if (index == MouseButton.None)
             return ResponseData.Error(400, $"unknown button '{button}' (expected left|right|middle)");
 
+        var viewport = GetViewport();
+        if (viewport == null) return ResponseData.Error(500, "no viewport");
+
         var pos = new Vector2(x, y);
+        // Coordinates are VIEWPORT pixels — the same space /screenshot captures.
+        // Events go through Viewport.PushInput with inLocalCoords: true rather than
+        // Input.ParseInputEvent: parsed OS events need a real window and a valid
+        // window->content stretch transform, neither of which exists headless, while
+        // local-coords PushInput enters the same GUI -> _unhandled_input pipeline
+        // directly in both modes and at any content scale factor. The leading motion
+        // event establishes GUI hover state, which BaseButton requires before a
+        // release emits `pressed` — real clicks are always preceded by motion. The
+        // warp keeps the OS cursor (and GetGlobalMousePosition readers) roughly in
+        // sync when windowed; it is a no-op headless.
         Input.WarpMouse(pos);
-        Input.ParseInputEvent(new InputEventMouseButton
+        viewport.PushInput(new InputEventMouseMotion
+        {
+            Position = pos,
+            GlobalPosition = pos,
+        }, true);
+        viewport.PushInput(new InputEventMouseButton
         {
             ButtonIndex = index,
             Pressed = true,
             Position = pos,
             GlobalPosition = pos,
-        });
-        Input.ParseInputEvent(new InputEventMouseButton
+        }, true);
+        viewport.PushInput(new InputEventMouseButton
         {
             ButtonIndex = index,
             Pressed = false,
             Position = pos,
             GlobalPosition = pos,
-        });
+        }, true);
 
         return ResponseData.Json(200, new Dictionary<string, object>
         {

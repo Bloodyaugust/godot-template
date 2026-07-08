@@ -67,15 +67,19 @@ an actor, committing a placement, right-click to cancel).
 { "x": 687.6, "y": 324, "button": "left" }
 ```
 
-`button` is `left` (default), `right`, or `middle`. The handler warps the mouse to
-`(x, y)` first (so handlers reading `GetGlobalMousePosition()` see the clicked point),
-then parses a press + release that flows through the normal GUI → `_unhandled_input`
-pipeline exactly like a real click — so `Control`s with `mouse_filter = Stop` still
-block clicks from reaching the world behind them.
+`button` is `left` (default), `right`, or `middle`. The handler pushes a mouse-motion
+event (establishing GUI hover state, as real clicks do) followed by a press + release
+through the viewport's input pipeline (`Viewport.PushInput`, local coords), so the
+click flows through the normal GUI → `_unhandled_input` path exactly like a real one —
+`Control`s with `mouse_filter = Stop` still block clicks from reaching the world
+behind them. It works **headless** and at any `ContentScaleFactor`; when windowed, the
+OS cursor is also warped to `(x, y)` so handlers reading `GetGlobalMousePosition()`
+stay in sync.
 
-Coordinates are **viewport pixels**. To click a *world* position in a game with a
-moving camera, expose the camera position, zoom, and viewport size through a typed
-domain route and map world → screen on the client:
+Coordinates are **viewport pixels** — the same space `GET /screenshot` captures, so
+pixel positions read off a screenshot can be clicked directly. To click a *world*
+position in a game with a moving camera, expose the camera position, zoom, and
+viewport size through a typed domain route and map world → screen on the client:
 
 ```
 screen = viewport_size / 2 + (world - camera_pos) * zoom
