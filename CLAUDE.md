@@ -117,6 +117,23 @@ Two variants of the pattern ship as working examples:
 - **Scene-controller-backed** (`/example/state` + `IAgentExample`): the implementer is the active scene's controller, so the surface exists only while that scene is up — routes return `503` otherwise. Use for per-screen domains (a mission, a shop, an editor).
 - **Autoload-backed, always present** (`/display/*` + `IAgentDisplay` on the `DisplayScale` autoload): the implementer lives for the whole process, so the surface never 503s. Use for global, process-lifetime domains (display settings, audio, save slots).
 
+### Cross-scene state & persistence (pattern to copy when needed)
+
+Top-level screens swapped with `GetTree().ChangeSceneToFile(...)` can't pass arguments, so anything that must survive a swap lives on an autoload. The shape that has worked well is a **trio**:
+
+- **A session carrier** (e.g. `GameSession`): the *transient* state handed from one screen to the next — the accepted mission, the chosen loadout. Process-lifetime, but conceptually scoped to "the current run"; it is not persisted.
+- **A durable profile** (e.g. `PlayerProfile`): the *permanent* player state — currency, unlocks, progression. It owns its mutation rules (purchases, rewards) and persists to disk through a companion store class.
+- **A constants class** (e.g. `GameConstants`): game-wide tunables that are neither per-scene nor per-content-definition. Plain `static` class, not an autoload.
+
+Register the autoloads in `project.godot` `[autoload]`. Keep per-scene state on the scene's own controller — it should die with the scene.
+
+When the durable profile grows disk persistence, follow these four rules (proven out in spun-out projects):
+
+1. **Version-stamped `user://` JSON.** One record (e.g. `user://profile.json`) written via `FileAccess` + `System.Text.Json`, carrying a `version` int. On load, a version mismatch discards the file and starts fresh (migrate later if it ever matters).
+2. **A DTO snapshot type decouples the disk format from live state.** The profile hands a plain `ProfileSnapshot` DTO to the store and rebuilds itself from one on load — the store never touches the profile's private fields, and the disk schema can evolve independently.
+3. **Every failure path is non-fatal.** A missing file, unreadable file, malformed JSON, or version mismatch logs a warning and returns `false`; the caller falls back to fresh defaults. A bad save must never crash the game.
+4. **Save after every durable mutation.** Call `Save()` at the end of each mutating operation (purchase, reward, settings change) rather than on quit — quit paths are unreliable (crashes, task kills), and the writes are tiny.
+
 ### Directory Layout
 - `scripts/` — C# game logic. Add subdirectories per system (e.g. `units/`, `world/`) as the project grows. Shared UI scaffolding (scene-path registry, palette, display scale) lives in `scripts/ui/`; stateless cross-system helpers go in `scripts/util/`.
 - `scenes/` — `.tscn` scene files, mirroring the structure of `scripts/`.
