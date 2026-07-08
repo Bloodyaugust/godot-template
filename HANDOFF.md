@@ -15,8 +15,8 @@ document, not a historical log — each handoff **replaces** the previous one.
 It complements, and does not duplicate, the standing docs:
 
 - `CLAUDE.md` / `README.md` — how the project is built and what conventions hold.
-- Any design docs the project keeps — the authoritative system specs (the *what* and
-  *why*).
+- `design/` — the authoritative design docs: settled system specs and visual
+  language (the *what* and *why*).
 
 This file is the *current* connective tissue: "here's where we are, here's what's
 next."

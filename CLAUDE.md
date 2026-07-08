@@ -4,6 +4,8 @@ Update this file whenever major architectural changes occur.
 
 Observe the README.md file in a subdirectory when making changes there. If you create or find a subdirectory that is not gitignored when looking for relevant source or making changes, create one. If you meaningfully change functionality in a directory, update its README.md.
 
+The authoritative, settled design of the game's systems lives in `design/` — game systems in `design/game/` (start at `design/game/README.md` once it exists, which indexes each system doc and carries the project glossary and global constants), visual language in `design/visual/`, screen mocks in `design/mocks/`; see `design/README.md` for the workflow. When implementing a new system, or making major functional changes to an existing one, first check for relevant design documentation in `design/game/` and read against it. In-flight, unsettled notes live in `ideas/` instead.
+
 For Godot-specific documentation searches, there is a `docs` directory in the root of the project that contains all of the Godot documentation, downloaded locally. Prefer that to searching the internet for Godot documentation.
 
 `docs/` is gitignored. To populate it, download the latest stable HTML build and unzip it into `docs/`:
@@ -140,7 +142,8 @@ When the durable profile grows disk persistence, follow these four rules (proven
 - `resources/` — `.tres` content files (`[GlobalClass]` Resource subclasses). See `resources/README.md` for the C# `.tres` format requirements.
 - `shaders/` — `.gdshader` files.
 - `sprites/` — sprite images and their `.import` sidecars (both individual sprites and packed atlases).
-- `ideas/` — markdown design notes for in-flight features. Move completed ideas into `ideas/done/`.
+- `ideas/` — markdown design notes for in-flight features. Move completed ideas into `ideas/done/`; fold settled designs into `design/`.
+- `design/` — authoritative, settled design documentation (`game/`, `visual/`, `mocks/`); documentation only, nothing here is loaded by the game. See `design/README.md`.
 
 ### UI Panels
 Always define UI panel structure in a `.tscn` file, not entirely in C#. Control anchor/offset layout is baked into the scene before nodes enter the tree; setting anchors in `_Ready()` runs after the first layout pass and produces incorrect positioning (e.g., centered panels appear in the top-left corner). The C# controller should only wire up signals and build dynamic content (cards, rows) via `GetNode<T>("%UniqueName")`.

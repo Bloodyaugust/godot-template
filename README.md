@@ -28,6 +28,7 @@ An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for
 | `shaders/` | `.gdshader` files. |
 | `sprites/` | Sprite images and their `.import` sidecars (individual sprites and packed atlases). |
 | `ideas/` | Markdown design notes for in-flight features; move completed ones to `ideas/done/`. |
+| `design/` | Authoritative, settled design documentation — game-system specs (`game/`), visual language (`visual/`), throwaway HTML screen mocks (`mocks/`). See `design/README.md`. |
 | `tests/` | Automated tests. `tests/hurl/` holds [Hurl](https://hurl.dev) REST scenarios that drive a booted game for agentic verification. |
 
 Each non-gitignored subdirectory should carry its own `README.md` describing its contents.
