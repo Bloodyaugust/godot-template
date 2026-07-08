@@ -4,6 +4,9 @@ Godot `.tres` resource files defining game content. These are loaded by code or 
 
 Group resources into subdirectories by type (e.g. `enemies/`, `items/`, `levels/`).
 
+`definitions/` is the exception: it holds **plain-JSON** content files loaded at
+runtime by `scripts/content/`, not `.tres` resources — see `definitions/README.md`.
+
 ## C# Custom Resource .tres Format
 
 Godot's runtime resource loader resolves types via ClassDB, which only knows native types — not C# classes. Every `.tres` file backed by a C# `Resource` subclass **must** include an explicit `script` reference, or the resource will fail to load at runtime with `Cannot get class 'X'`.

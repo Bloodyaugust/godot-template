@@ -24,7 +24,7 @@ An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for
 |--------|---------|
 | `scripts/` | C# source files for game logic. Add subdirectories per system as the project grows. |
 | `scenes/` | `.tscn` files. Mirror the structure of `scripts/`. |
-| `resources/` | `.tres` files defining game content (`[GlobalClass]` Resource subclasses). |
+| `resources/` | Game content data: `.tres` resources (`[GlobalClass]` Resource subclasses) plus `definitions/`, plain-JSON content loaded at runtime by `scripts/content/`. |
 | `shaders/` | `.gdshader` files. |
 | `sprites/` | Sprite images and their `.import` sidecars (individual sprites and packed atlases). |
 | `ideas/` | Markdown design notes for in-flight features; move completed ones to `ideas/done/`. |
