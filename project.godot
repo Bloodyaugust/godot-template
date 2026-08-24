@@ -21,10 +21,6 @@ config/icon="res://icon.svg"
 DisplayScale="*res://scripts/ui/DisplayScale.cs"
 AgentRestServer="*res://scripts/server/AgentRestServer.cs"
 
-[display]
-
-window/dpi/allow_hidpi=true
-
 [dotnet]
 
 project/assembly_name="godot-template"
