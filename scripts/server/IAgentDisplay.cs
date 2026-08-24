@@ -6,14 +6,15 @@ namespace godottemplate.Server;
 /// Typed agent surface for the global hi-dpi UI scale (the <see cref="IAgentExample"/>
 /// pattern). The <c>DisplayScale</c> autoload implements this and joins the
 /// <c>agent_display</c> group so <see cref="AgentRestServer"/> can expose
-/// <c>/display/*</c>: a snapshot of the effective/auto factors and the monitor's reported
-/// scale/DPI, plus a setter that either applies an explicit factor or returns to auto —
-/// returning the <c>{ok, state, error?}</c> envelope. Always present (the autoload runs
-/// for the whole process), so unlike scene-controller-backed surfaces it never 503s.
+/// <c>/display/*</c>: a snapshot of the effective/auto factors, the window-mode setting,
+/// and the monitor's reported scale/DPI, plus setters for the scale (explicit factor or
+/// back to auto) and the window mode — returning the <c>{ok, state, error?}</c> envelope.
+/// Always present (the autoload runs for the whole process), so unlike
+/// scene-controller-backed surfaces it never 503s.
 /// </summary>
 public interface IAgentDisplay
 {
-    /// <summary>Effective + auto factors, override flag, and the monitor's reported scale/DPI.</summary>
+    /// <summary>Effective + auto factors, override flag, window mode, and the monitor's reported scale/DPI.</summary>
     Dictionary<string, object> GetDisplayState();
 
     /// <summary>
@@ -22,4 +23,7 @@ public interface IAgentDisplay
     /// supported range). Fails if neither is supplied or the factor is out of range.
     /// </summary>
     (bool ok, string error) SetScale(float? factor, bool auto);
+
+    /// <summary>Set the window-mode setting: "windowed" or "fullscreen". Fails on anything else.</summary>
+    (bool ok, string error) SetWindowMode(string mode);
 }

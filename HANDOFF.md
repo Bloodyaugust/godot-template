@@ -40,6 +40,26 @@ Ask the agent to **rewrite `HANDOFF.md` for the next phase**. A good regeneratio
   in/out-of-scope boundaries and a concrete done-criteria checklist.
 - References exact file paths and the relevant docs.
 
+### What must NOT accumulate here
+
+This file holds only **transient** connective tissue — knowledge with no other
+home *yet*. Everything else moves to its owning doc at the moment it's learned,
+never parked here:
+
+- **Gotchas, invariants, quirks** → the owning `design/` doc, the directory
+  README, or a `tests/hurl/README.md` authoring rule. If it can't be settled
+  yet, it's an `ideas/` note.
+- **"Where the machinery lives" maps** → the directory READMEs are the index;
+  never mirror them here.
+- **Rot-prone literals** — file counts, member names, constant values — point
+  at the owning file instead of restating.
+
+**The litmus test**: a line that would survive the *next* regeneration unchanged
+is standing knowledge and belongs elsewhere. Past handoffs that accumulated
+"standing wrinkles" and machinery maps drifted into stale names and outright
+wrong claims — duplicated facts rot. When regenerating, migrate anything
+standing *first*, then write the brief.
+
 Keep it skimmable. It's a brief, not a novel.
 
 ---

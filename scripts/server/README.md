@@ -27,6 +27,8 @@ Generic errors (route not found, body too large, bad JSON, missing field) use `{
 
 Keep new routes consistent with these shapes so a single client helper can handle every response.
 
+**Bodyless mutations accept `GET`.** Windows' HTTP.sys rejects a bodyless `POST` with `411 Length Required` before the application sees it. Any mutation route callable without a body therefore also accepts `GET`, mirroring its body fields as query parameters (`/quit` / `/quit?code=N` is the shipped example). Follow the idiom for every bodyless route you add — register the route for both methods and read query values first, body fields second.
+
 ## Endpoints
 
 ### `GET /status`
@@ -34,8 +36,13 @@ Keep new routes consistent with these shapes so a single client helper can handl
 Sanity check.
 
 ```json
-{ "running": true, "scene": "/root/Main", "godot_version": "4.7.x" }
+{ "running": true, "scene": "/root/Main", "godot_version": "4.7.x",
+  "game_version": "0.1.0-dev" }
 ```
+
+`game_version` is `GameVersion.Current` (`scripts/core/GameVersion.cs`), suffixed
+`-dev` in debug builds so a dev build never claims to be the release of the same
+number.
 
 ### `POST /input/action`
 
@@ -160,12 +167,19 @@ Returns the list of agent-tagged buttons in the active scene:
 ```json
 [
   { "id": "main.quit", "type": "Button", "text": "Quit",
-    "disabled": false, "visible": true }
+    "disabled": false, "visible": true,
+    "rect": { "x": 16.0, "y": 16.0, "width": 80.0, "height": 34.0,
+              "center_x": 56.0, "center_y": 33.0 } }
 ]
 ```
 
 - `pressed` is included for toggle buttons (`ToggleMode = true`).
-- Disabled / hidden controls are still listed so agents can see *why* a button isn't actionable.
+- Disabled / hidden controls are still listed so agents can see *why* a button isn't actionable (`/ui/press` rejects them with `400` — walk the real navigation flow instead).
+- `rect` is the button's on-screen rectangle in the `/input/click` coordinate
+  space (canvas/content space — identical to window pixels at `DisplayScale`
+  factor 1.0), with a ready-made `center_x`/`center_y` click target so Hurl
+  scenarios — which can't do arithmetic in captures — aim without hardcoding
+  layout (`tests/hurl/display_input.hurl`).
 
 #### `POST /ui/press`
 
@@ -182,6 +196,7 @@ Emits the button's `Pressed` signal (for toggles, flips `ButtonPressed` first so
 #### Conventions
 
 - IDs are scene-prefixed and dot-delimited (`main.quit`, `main_menu.play`, `settings.apply`); they are the API contract, so refactor freely as long as the meta value is preserved.
+- Dynamically built buttons (list rows, tabs, cards) follow the same convention with a data-derived tail — `settings.tab.<name>`, `list.select.<key>` — set in code via `button.SetMeta("agent_id", ...)`, so data-driven UIs stay agent-drivable with zero per-item code.
 - Only `BaseButton` nodes participate. For richer controls, add a typed interface following the `IAgentInspectable` / `IAgentExample` patterns.
 - Don't tag inner UI used by bespoke endpoints; reserve `agent_id` for top-level navigation and one-off actions.
 
@@ -204,10 +219,11 @@ curl -X POST http://127.0.0.1:8080/ui/press \
 
 See `IAgentExample.cs` for step-by-step instructions on copying the pattern into a real domain surface (inventory, quest log, level editor, NPC dialogue, etc.) — the comments there are the canonical reference. Delete the stub once you've added at least one real domain interface.
 
-### `/display/*` — global UI scale (typed domain interface)
+### `/display/*` — display settings (typed domain interface)
 
-The hi-dpi UI scale, backed by the `DisplayScale` autoload (group `agent_display`,
-`IAgentDisplay` — see `scripts/ui/README.md`). Because the autoload runs for the whole
+The hi-dpi UI scale and window mode, backed by the `DisplayScale` autoload (group
+`agent_display`, `IAgentDisplay` — see `scripts/ui/README.md`). Both settings persist
+through `PlayerProfile` (`scripts/session/`). Because the autoload runs for the whole
 process, these routes are **always available** — the canonical example of an
 *always-present* typed surface, in contrast to scene-controller-backed surfaces (like
 `/example/state`) that return `503` when their scene isn't active.
@@ -219,6 +235,7 @@ process, these routes are **always available** — the canonical example of an
   "factor": 2.75,         // effective ContentScaleFactor (override if set, else auto)
   "auto_factor": 2.75,    // monitor-derived value computed at startup
   "has_override": false,  // whether an explicit override is active
+  "window_mode": "windowed", // the persisted setting: "windowed" | "fullscreen"
   "applied": 2.75,        // the value actually on the window (sanity check)
   "screen": 0,
   "screen_scale": 1.0,    // DisplayServer.ScreenGetScale (often 1.0 on X11)
@@ -240,7 +257,21 @@ curl -X POST http://127.0.0.1:8080/display/set -d '{"auto": true}'    # clear ov
 
 Returns the `{ok, state, error?}` envelope. `400` when neither field is supplied or
 `factor` is out of the `[min_factor, max_factor]` range. The change applies to the live
-window immediately (scales GUI + 2D canvas together).
+window immediately (scales GUI + 2D canvas together) and persists to the player profile.
+
+#### `POST /display/window`
+
+Set the window-mode setting — `"windowed"` or `"fullscreen"` (borderless; no
+exclusive mode):
+
+```sh
+curl -X POST http://127.0.0.1:8080/display/window -d '{"mode": "fullscreen"}'
+```
+
+Returns the `{ok, state, error?}` envelope; `400` on any other mode. The setting
+persists to the player profile and applies to the live window immediately; the
+reported `window_mode` is the *setting* — headless runs have no real window to
+reflect it.
 
 ### `POST /quit` (also accepts `GET`)
 

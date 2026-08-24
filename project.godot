@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="godot-template"
+config/version="0.1.0"
 run/main_scene="uid://crugjb6ckvs0s"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"

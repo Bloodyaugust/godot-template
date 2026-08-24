@@ -154,6 +154,7 @@ public partial class AgentRestServer : Node
         if (method == "GET" && path == "/example/state") return HandleExampleState();
         if (method == "GET" && path == "/display/state") return HandleDisplayState();
         if (method == "POST" && path == "/display/set") return HandleDisplaySet(ctx.Request);
+        if (method == "POST" && path == "/display/window") return HandleDisplayWindow(ctx.Request);
         if ((method == "POST" || method == "GET") && path == "/quit") return HandleQuit(ctx.Request);
 
         return ResponseData.Error(404, $"unknown route {method} {path}");
@@ -168,11 +169,16 @@ public partial class AgentRestServer : Node
 
         var versionString = Engine.GetVersionInfo()["string"].AsString();
 
+        // GameVersion is engine-free, so the debug `-dev` suffix (a dev build must
+        // never claim to be the release of the same number) is applied here.
+        var gameVersion = godottemplate.Core.GameVersion.Current + (OS.IsDebugBuild() ? "-dev" : "");
+
         var payload = new Dictionary<string, object>
         {
             ["running"] = true,
             ["scene"] = sceneName,
             ["godot_version"] = versionString,
+            ["game_version"] = gameVersion,
         };
         return ResponseData.Json(200, payload);
     }
@@ -431,12 +437,26 @@ public partial class AgentRestServer : Node
 
     private static Dictionary<string, object> SerializeAgentControl(BaseButton btn)
     {
+        // The on-screen rectangle, in the same coordinate space /input/click consumes
+        // (canvas/content space — identical to window pixels at DisplayScale 1.0), so
+        // click-driven scenarios can aim at a button's center without hardcoding layout.
+        var rect = btn.GetGlobalRect();
         var entry = new Dictionary<string, object>
         {
             ["id"] = btn.GetMeta(AgentIdMeta).AsString(),
             ["type"] = btn.GetType().Name,
             ["disabled"] = btn.Disabled,
             ["visible"] = btn.IsVisibleInTree(),
+            ["rect"] = new Dictionary<string, object>
+            {
+                ["x"] = rect.Position.X,
+                ["y"] = rect.Position.Y,
+                ["width"] = rect.Size.X,
+                ["height"] = rect.Size.Y,
+                // Ready-made click target: Hurl captures can't do arithmetic.
+                ["center_x"] = rect.GetCenter().X,
+                ["center_y"] = rect.GetCenter().Y,
+            },
         };
         if (btn is Button b) entry["text"] = b.Text;
         if (btn.ToggleMode) entry["pressed"] = btn.ButtonPressed;
@@ -567,6 +587,30 @@ public partial class AgentRestServer : Node
         }
 
         var result = display.SetScale(factor, auto);
+        var payload = new Dictionary<string, object>
+        {
+            ["ok"] = result.ok,
+            ["state"] = display.GetDisplayState(),
+        };
+        if (!result.ok) payload["error"] = result.error;
+        return ResponseData.Json(result.ok ? 200 : 400, payload);
+    }
+
+    private ResponseData HandleDisplayWindow(HttpListenerRequest req)
+    {
+        var display = FindDisplay();
+        if (display == null) return ResponseData.Error(503, NoDisplayError);
+        if (!TryReadJson(req, out var doc, out var err)) return err;
+
+        string mode = null;
+        using (doc)
+        {
+            var root = doc.RootElement;
+            if (root.TryGetProperty("mode", out var me) && me.ValueKind == JsonValueKind.String)
+                mode = me.GetString();
+        }
+
+        var result = display.SetWindowMode(mode);
         var payload = new Dictionary<string, object>
         {
             ["ok"] = result.ok,

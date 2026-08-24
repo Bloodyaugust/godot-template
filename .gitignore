@@ -7,5 +7,15 @@ docs/
 # Local tooling
 *.csproj.lscache
 
+# xUnit test project build output (tests/unit)
+tests/unit/bin/
+tests/unit/obj/
+
 # Claude Code per-user overrides (project allowlist lives in .claude/settings.json and is checked in)
 .claude/settings.local.json
+
+# Export output (.github/workflows/publish-itch.yml and local godot-mono --export-release runs).
+# The tracked .gdignore hides the dir from Godot's scanner — without it the exporter
+# packs earlier exports' loose resource-typed files (e.g. deps.json) into later pcks.
+build/*
+!build/.gdignore

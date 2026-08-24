@@ -5,4 +5,9 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>godottemplate</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- tests/unit is its own project (xUnit, plain dotnet test); keep the game's
+         default compile glob out of it. -->
+    <Compile Remove="tests/**/*.cs" />
+  </ItemGroup>
 </Project>

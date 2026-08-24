@@ -92,6 +92,10 @@ where possible. Use Bash/PowerShell for renames and deletions.
 - `godot-template.csproj` → `<PROJECT_NAME>.csproj`
 - `godot-template.sln` → `<PROJECT_NAME>.sln`
 - `godot-template.csproj.uid` → `<PROJECT_NAME>.csproj.uid` (if it exists)
+- `tests/unit/godottemplate.Tests.csproj` → `tests/unit/<CHOSEN_NAMESPACE>.Tests.csproj`
+  (also update its `<RootNamespace>` to `<CHOSEN_NAMESPACE>.Tests`, and the
+  `dotnet test` path named in `CLAUDE.md`'s verification workflow and
+  `tests/unit/README.md`)
 
 ### 5.2 Edit the renamed `.csproj`
 
@@ -107,6 +111,14 @@ references, project display name, and any other matches).
 
 - `config/name="godot-template"` → `config/name="<PROJECT_NAME>"`
 - `project/assembly_name="godot-template"` → `project/assembly_name="<PROJECT_NAME>"`
+
+### 5.4b Edit `export_presets.cfg` and `.github/workflows/publish-itch.yml`
+
+- In `export_presets.cfg`, replace the `godot-template` stem in both
+  `export_path` values (`build/windows/godot-template.exe`,
+  `build/linux/godot-template.x86_64`) with `<PROJECT_NAME>`.
+- In `.github/workflows/publish-itch.yml`, set `BINARY_NAME: godot-template` to
+  `BINARY_NAME: <PROJECT_NAME>` (it must match the export paths).
 
 ### 5.5 Namespace rewrite across `.cs` files
 
@@ -127,6 +139,9 @@ Known starting points (verify with Grep, do not assume exhaustive):
 - `scripts/content/ContentLoader.cs`, `scripts/content/DefReader.cs`,
   `scripts/content/ContentException.cs`
 - `scripts/util/Ranges.cs`
+- `scripts/core/GameVersion.cs`
+- `scripts/session/PlayerProfile.cs`, `scripts/session/ProfileStore.cs`
+- `tests/unit/GameVersionTests.cs`
 
 ### 5.6 Swap the demo scene
 

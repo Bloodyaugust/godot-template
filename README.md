@@ -29,9 +29,22 @@ An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for
 | `sprites/` | Sprite images and their `.import` sidecars (individual sprites and packed atlases). |
 | `ideas/` | Markdown design notes for in-flight features; move completed ones to `ideas/done/`. |
 | `design/` | Authoritative, settled design documentation — game-system specs (`game/`), visual language (`visual/`), throwaway HTML screen mocks (`mocks/`). See `design/README.md`. |
-| `tests/` | Automated tests. `tests/hurl/` holds [Hurl](https://hurl.dev) REST scenarios that drive a booted game for agentic verification. |
+| `tests/` | Automated tests. `tests/hurl/` holds [Hurl](https://hurl.dev) REST scenarios that drive a booted game for agentic verification; `tests/unit/` is the engine-free xUnit project (`dotnet test`) over `scripts/core/`. |
 
 Each non-gitignored subdirectory should carry its own `README.md` describing its contents.
+
+## Releasing
+
+The authoritative game version is `GameVersion.Current` (`scripts/core/GameVersion.cs`).
+Cutting a release: bump the constant in a commit, then push the matching `v*` tag
+(e.g. `v0.2.0`) — that runs `.github/workflows/publish-itch.yml`: it fails fast on a
+tag-vs-constant mismatch, exports the `export_presets.cfg` Windows and Linux release
+presets headless on CI, stamps `project.godot` `config/version` from the constant,
+smoke-checks that the exported Linux binary boots, and — when an itch.io project is
+configured in the workflow's `ITCH_PROJECT` env — publishes both builds with butler
+(requires the `BUTLER_API_KEY` repository secret, an itch.io API key). A manual run
+from the Actions tab is a dry run — build and smoke check only, no publish. Details:
+`.github/workflows/README.md`.
 
 ## Agent REST interface
 
@@ -42,7 +55,9 @@ Multi-step flows are scripted as [Hurl](https://hurl.dev) scenarios in `tests/hu
 ## Tooling
 
 - `CLAUDE.md` — instructions for [Claude Code](https://claude.com/claude-code).
+- `export_presets.cfg` — Godot export presets ("Windows Release", "Linux Release"), built locally via `godot-mono --headless --export-release "<preset>" build/<platform>/<binary>` (output lands in the gitignored `build/`) and by the release pipeline above.
 - `HANDOFF.md` — opt-in session-to-session handoff brief: what the last work session shipped and what the next one should pick up. Only used when a human explicitly asks for the handoff flow; see the header inside the file.
+- `milestones.md` — the milestone checklist grounding "what should the next session target" conversations; updated as items complete.
 - `AGENTS.md` — symlink-style pointer for agentic CLI tools that look up `AGENTS.md` instead of `CLAUDE.md`.
 - `opencode.json` — [opencode](https://opencode.ai) configuration; primarily used to hand off Godot docs exploration tasks (see `CLAUDE.md`).
 - `.editorconfig` — editor-agnostic formatting rules.

@@ -6,7 +6,8 @@
 #
 #   ./run-tests.ps1                       # all *.hurl, headless
 #   ./run-tests.ps1 -Windowed             # watch it run
-#   ./run-tests.ps1 smoke.hurl            # a single file
+#   ./run-tests.ps1 -Files smoke.hurl     # a single file (bare positional
+#                                         # misbinds to -Port under PS 5.1)
 #   ./run-tests.ps1 -Port 9090            # non-default REST port
 param(
     [Parameter(ValueFromRemainingArguments = $true)] [string[]]$Files,
@@ -34,10 +35,24 @@ if (-not $Files -or $Files.Count -eq 0) {
     $Files = $Files | ForEach-Object { if (Test-Path $_) { (Resolve-Path $_).Path } else { Join-Path $here $_ } }
 }
 
+# Pin the player profile to memory-only on every instance we boot: test runs
+# must never touch the developer's real user://profile.json (display-settings
+# mutations included — display_input.hurl).
+$env:GODOT_PROFILE_MEMORY = '1'
+
 $failed = 0
 foreach ($f in $Files) {
     Write-Host "=== $([IO.Path]::GetFileName($f)) ==="
+    # Boot scene: the configured main scene unless the file carries a
+    # "# boot_scene:" directive in its header. "default" means no scene
+    # argument — the configured main scene; any other value is passed to
+    # godot-mono as the scene path (e.g. res://scenes/foo.tscn), so files
+    # exercising a non-default scene never have to walk the menu flow.
+    $scene = 'default'
+    $directive = Select-String -Path $f -Pattern '^#\s*boot_scene:\s*(\S+)' | Select-Object -First 1
+    if ($directive) { $scene = $directive.Matches[0].Groups[1].Value }
     $gargs = @('--path', $root)
+    if ($scene -ne 'default') { $gargs += $scene }
     if (-not $Windowed) { $gargs += '--headless' }
     $proc = Start-Process godot-mono -ArgumentList $gargs -PassThru
     try {
@@ -53,6 +68,8 @@ foreach ($f in $Files) {
         if ($up -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
     }
 }
+
+Remove-Item Env:GODOT_PROFILE_MEMORY -ErrorAction SilentlyContinue
 
 if ($failed -gt 0) { Write-Host "`nFAILED: $failed file(s)"; exit 1 }
 Write-Host "`nAll Hurl tests passed"

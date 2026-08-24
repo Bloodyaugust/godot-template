@@ -39,6 +39,30 @@ HTTP 200
 jsonpath "$.ok" == true
 jsonpath "$.state.has_override" == false
 
+# ── 3b. Window-mode roundtrip (the persisted setting; headless has no real
+#        window, so the reported state IS the setting) ────────────────────────
+POST http://{{host}}/display/window
+{ "mode": "fullscreen" }
+HTTP 200
+[Asserts]
+jsonpath "$.ok" == true
+jsonpath "$.state.window_mode" == "fullscreen"
+
+POST http://{{host}}/display/window
+{ "mode": "windowed" }
+HTTP 200
+[Asserts]
+jsonpath "$.ok" == true
+jsonpath "$.state.window_mode" == "windowed"
+
+# ── 3c. An unknown mode is rejected with the error envelope ───────────────────
+POST http://{{host}}/display/window
+{ "mode": "maximized" }
+HTTP 400
+[Asserts]
+jsonpath "$.ok" == false
+jsonpath "$.error" exists
+
 # ── 4. An out-of-range factor is rejected with the error envelope ─────────────
 POST http://{{host}}/display/set
 { "factor": 9.0 }
@@ -56,9 +80,19 @@ HTTP 200
 jsonpath "$.ok" == true
 jsonpath "$.state.applied" == 1.0
 
-# ── 6. Teardown: click the QuitButton (rect 16..96 x 16..48 -> center 56,32) ──
+# ── 6. Teardown by clicking the QuitButton. Aim with the rect data
+#      /ui/controls reports (content-space, identical to click coords at the
+#      factor-1.0 pin above) — never hardcoded coordinates. ───────────────────
+GET http://{{host}}/ui/controls
+HTTP 200
+[Asserts]
+jsonpath "$[?(@.id == 'main.quit' && @.visible == true)]" exists
+[Captures]
+quit_x: jsonpath "$[?(@.id == 'main.quit')].rect.center_x"
+quit_y: jsonpath "$[?(@.id == 'main.quit')].rect.center_y"
+
 POST http://{{host}}/input/click
-{ "x": 56, "y": 32 }
+{ "x": {{quit_x}}, "y": {{quit_y}} }
 HTTP 200
 [Asserts]
 jsonpath "$.ok" == true

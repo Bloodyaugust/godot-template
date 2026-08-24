@@ -18,16 +18,29 @@ at timing.
 ## Running
 
 The runner boots a **fresh headless instance per file**, runs it, and guarantees
-teardown even on a mid-file failure:
+teardown even on a mid-file failure. By default each file boots the configured
+main scene; a file can override this with a directive comment in its header —
+`# boot_scene: res://scenes/foo.tscn` passes that scene to `godot-mono` as the
+scene argument (`# boot_scene: default` is the explicit form of the default), so
+files exercising a non-default scene never have to walk the menu flow to reach
+it.
 
 ```sh
 tests/hurl/run-tests.ps1                 # PowerShell: all *.hurl, headless
 tests/hurl/run-tests.ps1 -Windowed       #   watch it run in a window
-tests/hurl/run-tests.ps1 smoke.hurl      #   a single file
+tests/hurl/run-tests.ps1 -Files smoke.hurl   # a single file — bare positional
+                                             # misbinds to -Port under PS 5.1
 
 tests/hurl/run-tests.sh                  # bash equivalent
 WINDOWED=1 tests/hurl/run-tests.sh
 ```
+
+Both runners pin `GODOT_PROFILE_MEMORY=1` on every instance they boot: the whole
+**player profile** (`scripts/session/PlayerProfile.cs`) goes memory-only, so test
+runs never touch the developer's real `user://profile.json` — display-settings
+mutations included (`display_input.hurl`). A file run **by hand** against a
+manually-booted game doesn't get the pin — boot with the env var set if profile
+writes would interfere.
 
 Or run one file by hand against an **already-booted** game (handy while iterating):
 
@@ -52,7 +65,10 @@ on a failed assert — the state snapshot that tells you *why* it failed.
 3. **Capture, don't hardcode.** Pull ids and coordinates out of responses with
    `[Captures]` and reuse them as `{{var}}`. Anything the game generates at runtime
    (rolled content, generated maps, session ids) differs per boot — a hardcoded value
-   is a latent flake.
+   is a latent flake. For clicking buttons, `/ui/controls` reports each control's
+   on-screen `rect` with a ready-made `center_x`/`center_y` (Hurl captures can't do
+   arithmetic) — capture those instead of pinning layout coordinates
+   (`display_input.hurl`).
 
 ## Authoring rules (learned the hard way)
 
@@ -62,6 +78,24 @@ nodes. So `jsonpath "$.items[?(@.done == false)]" count == 0` is unusable. Asser
 filter that always matches at least one node instead, e.g.
 `jsonpath "$.items[?(@.done == true)]" count >= 3`.
 
+**Rule 1b — a filter matching exactly ONE node unwraps to an object, breaking
+`count` too.** Hurl's JSONPath returns a bare object (not a one-element list) when a
+filter matches a single node, and `count` then errors with `invalid filter input
+type`. So `count` is only safe when the match is guaranteed to be ≥ 2. For
+"at least one exists" (including inside a retry that waits for the first match), use
+`exists` instead: `jsonpath "$.items[?(@.kind == 'foo')]" exists`. For "exactly
+one was created", `exists` after a mutation guaranteed to add it is the
+practical assert.
+
+**Rule 1c — a filter predicate cannot reach into a nested array.**
+`$.items[?(@.tags[0].id == 'x')]` matches **nothing**, and so does
+`$.items[?(@.kind == 'x')].tags[0].field`. What works is a filter that matches
+exactly one node followed by a wildcard hop:
+`$.items[?(@.uid == 12)].tags[*].weight == 1.3` (a nested *object* under the
+wildcard hop is fine — only arrays inside filters break). For "does any element
+have a second tag?", the global sweep `$.items[*].tags[1]` **not exists** does the
+job, and `$.items[*].tags[*].id` `count == N` counts carriers across the board.
+
 **Rule 2 — use the GET aliases for bodyless calls.** Windows' HTTP.sys rejects a
 bodyless `POST` with `411` before the app sees it. Routes that take no body (`/quit`,
 and any bodyless mutation route you add) should accept `GET` — use it.
@@ -70,6 +104,12 @@ and any bodyless mutation route you add) should accept `GET` — use it.
 rejected by game rules (e.g. a placement that may collide with generated content),
 omit the `HTTP 200` line and asserts so a rejection is tolerated instead of failing
 the run. Reserve hard asserts for steps that are guaranteed valid.
+
+**Rule 4 — assert phases and identity, never timings or display names.** Anything
+that runs on wall-clock (async connects, timeouts, grace windows) is noise under
+test load — assert the *state transitions* and let retry do the waiting; never
+assert how long a transition took. Likewise assert stable identifiers (ids, keys)
+rather than rendered display text, which is presentation and may change or collide.
 
 **Teardown.** Every file ends by quitting the game (`GET /quit`, or pressing a quit
 button through the surface under test) so a successful run leaves nothing behind. The
@@ -88,6 +128,15 @@ response envelopes, and the `agent_id` button surface are in `scripts/server/REA
 — keep that file authoritative when you add or change routes.
 
 ## Install
+
+**Requires hurl ≥ 8.0.1.** Combined JSONPath filters
+(`$.items[?(@.kind == 'foo' && @.team == 'blue')]`) are the workhorse of these
+scenarios, and hurl 4.x–6.x reject the `&&` and fail every such file with
+`Invalid JSONPath`. Also note the two JSONPath quirks Rules 1b/1c above work
+around: a filter matching **exactly one** element returns that object (not a
+1-element list), so `count == 1` errors — assert `exists` (or count a set that is
+always ≥ 2) instead; and chained filters (`[?(...)][?(...)]`) don't compose for
+value extraction, so combine predicates with `&&` in a single filter.
 
 - **Windows:** `winget install --id Orange-OpenSource.Hurl` (binary lands at
   `C:\Program Files\Hurl\hurl.exe`; may not be on the current shell's `PATH` until a

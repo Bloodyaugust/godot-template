@@ -25,15 +25,26 @@ fi
 files=("$@")
 if [ "${#files[@]}" -eq 0 ]; then files=("$here"/*.hurl); fi
 
+# Pin the player profile to memory-only on every instance we boot: test runs
+# must never touch the developer's real user://profile.json (display-settings
+# mutations included — display_input.hurl).
+export GODOT_PROFILE_MEMORY=1
+
 failed=0
 for f in "${files[@]}"; do
     [ -f "$f" ] || f="$here/$f"
     echo "=== $(basename "$f") ==="
-    if [ "$windowed" = "1" ]; then
-        godot-mono --path "$root" >/dev/null 2>&1 &
-    else
-        godot-mono --path "$root" --headless >/dev/null 2>&1 &
-    fi
+    # Boot scene: the configured main scene unless the file carries a
+    # "# boot_scene:" directive in its header. "default" means no scene
+    # argument — the configured main scene; any other value is passed to
+    # godot-mono as the scene path (e.g. res://scenes/foo.tscn), so files
+    # exercising a non-default scene never have to walk the menu flow.
+    scene="$(sed -n 's/^#[[:space:]]*boot_scene:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$f" | head -n1)"
+    scene="${scene:-default}"
+    gargs=(--path "$root")
+    [ "$scene" != "default" ] && gargs+=("$scene")
+    [ "$windowed" != "1" ] && gargs+=(--headless)
+    godot-mono "${gargs[@]}" >/dev/null 2>&1 &
     pid=$!
     hurl --test --jobs 1 --variable host="$hostport" --error-format long "$f" || failed=$((failed + 1))
     # The file quits itself on success; force teardown on any failure path.

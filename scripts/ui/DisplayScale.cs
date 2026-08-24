@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 using godottemplate.Server;
+using godottemplate.Session;
 
 namespace godottemplate.UI;
 
@@ -23,8 +24,10 @@ namespace godottemplate.UI;
 /// On startup it derives an automatic factor from the monitor (<see cref="DisplayServer.ScreenGetScale"/>,
 /// falling back to <see cref="DisplayServer.ScreenGetDpi"/> / 96), snapped to quarter steps
 /// and clamped to a sane range. The player may set an explicit override; clearing it returns
-/// to auto. The override is in-memory; wire it into the game's settings persistence (and a
-/// settings screen) once one exists.
+/// to auto. Beside the scale it owns the window-mode setting (windowed vs. borderless
+/// fullscreen). Both settings persist through <see cref="PlayerProfile"/> and are
+/// re-applied here at boot; the reported state is the <em>setting</em>, not the live OS
+/// window (headless runs have no real window).
 ///
 /// Registered as an autoload (runs in debug and release alike); the agent-facing REST
 /// surface that drives it (<c>/display/*</c>) is the only debug-only part.
@@ -64,12 +67,19 @@ public partial class DisplayScale : Node, IAgentDisplay
     /// <summary>Whether an explicit override is active (vs. following the monitor).</summary>
     public bool HasOverride => _override.HasValue;
 
+    /// <summary>The window-mode setting: true = (borderless) fullscreen, false = windowed.</summary>
+    public bool Fullscreen { get; private set; }
+
     public override void _Ready()
     {
         Instance = this;
         AddToGroup(AgentGroup);
         AutoFactor = ComputeAutoFactor();
+        if (PlayerProfile.ScaleOverride is { } persisted)
+            _override = Snap(persisted);
+        Fullscreen = PlayerProfile.Fullscreen;
         Apply();
+        ApplyWindowMode();
     }
 
     /// <summary>
@@ -104,18 +114,36 @@ public partial class DisplayScale : Node, IAgentDisplay
         if (window != null) window.ContentScaleFactor = Factor;
     }
 
-    /// <summary>Set an explicit override factor (snapped + clamped) and apply it immediately.</summary>
+    /// <summary>Set an explicit override factor (snapped + clamped), apply it immediately, and persist.</summary>
     public void SetOverride(float factor)
     {
         _override = Snap(factor);
+        PlayerProfile.SetScaleOverride(_override);
         Apply();
     }
 
-    /// <summary>Clear any override and return to the monitor-derived auto factor.</summary>
+    /// <summary>Clear any override, return to the monitor-derived auto factor, and persist.</summary>
     public void ClearOverride()
     {
         _override = null;
+        PlayerProfile.SetScaleOverride(null);
         Apply();
+    }
+
+    /// <summary>Set the window mode, apply it immediately, and persist.</summary>
+    public void SetFullscreen(bool fullscreen)
+    {
+        Fullscreen = fullscreen;
+        PlayerProfile.SetFullscreen(fullscreen);
+        ApplyWindowMode();
+    }
+
+    /// <summary>Apply <see cref="Fullscreen"/> to the main window.</summary>
+    private void ApplyWindowMode()
+    {
+        var window = GetWindow();
+        if (window != null)
+            window.Mode = Fullscreen ? Window.ModeEnum.Fullscreen : Window.ModeEnum.Windowed;
     }
 
     // =====================================================================
@@ -130,6 +158,7 @@ public partial class DisplayScale : Node, IAgentDisplay
             ["factor"] = Factor,
             ["auto_factor"] = AutoFactor,
             ["has_override"] = HasOverride,
+            ["window_mode"] = Fullscreen ? "fullscreen" : "windowed",
             ["applied"] = window?.ContentScaleFactor ?? Factor,
             ["screen"] = DisplayServer.WindowGetCurrentScreen(),
             ["screen_scale"] = DisplayServer.ScreenGetScale(),
@@ -153,5 +182,15 @@ public partial class DisplayScale : Node, IAgentDisplay
             return (false, $"factor {factor.Value} out of range [{MinFactor}, {MaxFactor}]");
         SetOverride(factor.Value);
         return (true, null);
+    }
+
+    public (bool ok, string error) SetWindowMode(string mode)
+    {
+        switch (mode)
+        {
+            case "windowed": SetFullscreen(false); return (true, null);
+            case "fullscreen": SetFullscreen(true); return (true, null);
+            default: return (false, $"'mode' must be \"windowed\" or \"fullscreen\" (got '{mode}')");
+        }
     }
 }

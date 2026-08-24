@@ -1,17 +1,28 @@
 This is a Godot 4.7 Mono (C#) game project. Read the root @README.md for a human-centric description of the game.
 
-Update this file whenever major architectural changes occur.
+**Engineering constraint**: lean hard on built-in Godot systems — do not write custom replacements until the built-in ones demonstrably don't fit. When a built-in genuinely doesn't fit, record a **dated, scoped amendment** here stating exactly which subsystem the constraint is lifted for and why, and that it stands in full everywhere else. (Amendment shape: "**Amended YYYY-MM-DD**: the built-ins demonstrably don't fit `<subsystem>` — `<concrete reason>`. That subsystem is deliberately hand-rolled; the constraint stands in full everywhere else.")
 
-Observe the README.md file in a subdirectory when making changes there. If you create or find a subdirectory that is not gitignored when looking for relevant source or making changes, create one. If you meaningfully change functionality in a directory, update its README.md.
+## Documentation convention
 
-The authoritative, settled design of the game's systems lives in `design/` — game systems in `design/game/` (start at `design/game/README.md` once it exists, which indexes each system doc and carries the project glossary and global constants), visual language in `design/visual/`, screen mocks in `design/mocks/`; see `design/README.md` for the workflow. When implementing a new system, or making major functional changes to an existing one, first check for relevant design documentation in `design/game/` and read against it. In-flight, unsettled notes live in `ideas/` instead.
+Three layers, each stated **once** — never mirror one layer's content into another:
+
+- **`design/` docs capture intent** — what a system is and *why* (decisions, rejected alternatives, balance intents, revisions). `design/game/*.md` and `design/visual/*.md` are the single authority for every system's semantics; `design/game/README.md` (create it with the first system doc) is the design-side index and carries the project glossary and global constants. When implementing a new system or making major functional changes, read against the relevant design doc first; when a change touches semantics, revise the doc deliberately — never let code and doc silently drift. In-flight, unsettled notes live in `ideas/` instead (see `design/README.md` for the workflow).
+- **Code self-documents the exact mechanics** — signatures, XML docs, validation rules, and the constants themselves. Do not restate a number, a validation rule, or an algorithm the code already states in a README or in this file.
+- **READMEs are a searchable index** — every non-gitignored subdirectory carries a `README.md` listing what lives there and which design doc owns it: a few sentences per file, plus pointers. Create one when you create a directory; keep it pointing at the right places when functionality moves. Two deliberate exceptions own reference content of their niche: `scripts/server/README.md` (the full REST endpoint/schema reference) and `tests/hurl/README.md` (the scenario-authoring rules).
+
+This file stays a lean **operating manual**: engineering constraints, workflows, cross-cutting patterns and registries, the REST endpoint table (the API contract), and pointers into `design/` and the READMEs. Update it whenever major architectural changes occur, but do not inflate it with per-system semantics — those belong to `design/`.
+
+## Version control
+
+This project uses **trunk-based development**: commit directly to `main`. Do **not** create feature branches for changes — branch only if a human explicitly asks. Commit (and push) only when asked. *(Policy block — a team that works differently should rewrite this section to match its flow.)*
 
 For Godot-specific documentation searches, there is a `docs` directory in the root of the project that contains all of the Godot documentation, downloaded locally. Prefer that to searching the internet for Godot documentation.
 
-`docs/` is gitignored. To populate it, download the latest stable HTML build and unzip it into `docs/`:
+`docs/` is gitignored. To populate it, download the latest stable HTML build and unzip it into `docs/`. The `.gdignore` file is **required** — without it the Godot editor tries to import the thousands of images inside the docs as game assets:
 
 ```sh
 mkdir -p docs
+touch docs/.gdignore
 curl -L -o /tmp/godot-docs.zip https://nightly.link/godotengine/godot-docs/workflows/build_offline_docs/master/godot-docs-html-stable.zip
 unzip -q /tmp/godot-docs.zip -d docs
 rm /tmp/godot-docs.zip
@@ -22,10 +33,11 @@ rm /tmp/godot-docs.zip
 After making code changes, before reporting the work as done:
 
 1. **Compile.** Run `dotnet build` and resolve any errors/warnings introduced by the change.
-2. **Agentic functional test.** Boot the game with `godot-mono` and exercise the changed behavior through the `AgentRestServer` REST interface (default `http://127.0.0.1:8080/`; endpoints documented below and in `scripts/server/README.md`). The goal is to confirm that the basic flow works end-to-end and that no regressions were introduced in adjacent features — not to evaluate balance or feel. **For anything beyond a single request, write or extend a Hurl test in `tests/hurl/` instead of hand-driving `curl`** — see *Scripted agentic tests (Hurl)* below.
-3. **Extend the REST surface when needed.** If a new feature isn't reachable via the existing endpoints, extending `AgentRestServer` (new route, new `agent_id` on a button, new `IAgentInspectable` properties, new typed domain interface, etc.) is part of the implementation, not a follow-up. The bar is: any functionality that doesn't inherently require human eyes (visuals, feel, balance) must be agent-testable. Update the endpoint table in this file when you add or change routes.
-4. **Identify human-only verification.** Anything the agent genuinely can't assess — visual polish, animation/timing feel, audio, balance/difficulty tuning, subjective gameplay interactions — gets handed back to the user.
-5. **Clean up only the game instance you launched — never a blanket process kill.** Shut the test instance down with `POST /quit` (or `GET /quit` on Windows HTTP.sys). That is the *only* approved teardown: `/quit` is reachable solely through the running game's `AgentRestServer`, so it can never touch anything else. Confirm teardown by checking the **server is gone** (`/status` no longer responds), not by listing processes. Leaving an instance up ties up port 8080, blocks the next boot's `AgentRestServer` registration, and leaves stale background tasks. Tear down before reporting work done — including on failure paths.
+2. **Unit-test the engine-free layers.** Run `dotnet test tests/unit/godottemplate.Tests.csproj` — the xUnit rig over the pure-C# `scripts/core/` layer; it must stay green, and changes to engine-free logic get their coverage here, not in Hurl. The rig compiles the `scripts/core/` sources directly, so it doubles as the no-Godot-types boundary check.
+3. **Agentic functional test.** Boot the game with `godot-mono` and exercise the changed behavior through the `AgentRestServer` REST interface (default `http://127.0.0.1:8080/`; endpoints documented below and in `scripts/server/README.md`). The goal is to confirm that the basic flow works end-to-end and that no regressions were introduced in adjacent features — not to evaluate balance or feel. **For anything beyond a single request, write or extend a Hurl test in `tests/hurl/` instead of hand-driving `curl`** — see *Scripted agentic tests (Hurl)* below.
+4. **Extend the REST surface when needed.** If a new feature isn't reachable via the existing endpoints, extending `AgentRestServer` (new route, new `agent_id` on a button, new `IAgentInspectable` properties, new typed domain interface, etc.) is part of the implementation, not a follow-up. The bar is: any functionality that doesn't inherently require human eyes (visuals, feel, balance) must be agent-testable. Update the endpoint table in this file when you add or change routes.
+5. **Identify human-only verification.** Anything the agent genuinely can't assess — visual polish, animation/timing feel, audio, balance/difficulty tuning, subjective gameplay interactions — gets handed back to the user.
+6. **Clean up only the game instance you launched — never a blanket process kill.** Shut the test instance down with `POST /quit` (or `GET /quit` on Windows HTTP.sys). That is the *only* approved teardown: `/quit` is reachable solely through the running game's `AgentRestServer`, so it can never touch anything else. Confirm teardown by checking the **server is gone** (`/status` no longer responds), not by listing processes. Leaving an instance up ties up port 8080, blocks the next boot's `AgentRestServer` registration, and leaves stale background tasks. Tear down before reporting work done — including on failure paths.
 
    **Do NOT kill `godot-mono` processes by name.** The developer normally has the Godot **editor** open, which is *also* a `godot-mono` process; `Get-Process godot-mono | Stop-Process`, `taskkill /im godot-mono`, `pkill godot-mono`, and the like will destroy their editor session. Seeing a leftover `godot-mono` in the task list after `/quit` returns `200` almost always means you're looking at the editor — leave it alone. If (and only if) a *game instance you launched* genuinely refuses to quit via `/quit`, kill that one **specific PID** — the one captured when you spawned it (`echo $!` / the launch command's reported pid) — and nothing else.
 
@@ -39,9 +51,11 @@ Run them with the wrapper (boots a fresh headless instance per file, guarantees 
 
 ```sh
 tests/hurl/run-tests.ps1                 # all files, headless   (-Windowed to watch)
-tests/hurl/run-tests.ps1 smoke.hurl      # one file
+tests/hurl/run-tests.ps1 -Files smoke.hurl   # one file (bare positional binds to -Port under PS 5.1 — always pass -Files)
 tests/hurl/run-tests.sh                  # bash equivalent (WINDOWED=1 to watch)
 ```
+
+The runner boots each file into the configured main scene by default; a file that needs a different boot carries a `# boot_scene:` directive in its header (`default` = the configured main scene) — see `tests/hurl/README.md`.
 
 Or iterate against an already-booted game: `hurl --test --jobs 1 --variable host=127.0.0.1:8080 --error-format long tests/hurl/<file>.hurl`.
 
@@ -69,21 +83,24 @@ Endpoints:
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `/status` | Sanity check; returns running flag, current scene path, Godot version. |
+| `GET` | `/status` | Sanity check; returns running flag, current scene path, Godot version, `game_version` (`GameVersion.Current` — `-dev`-suffixed in debug builds). |
 | `POST` | `/input/action` | Body `{"action": "<name>", "mode": "press"\|"release"\|"tap"}`. `tap` auto-releases after one `_Process` frame. |
 | `POST` | `/input/click` | Body `{"x": <px>, "y": <px>, "button": "left"\|"right"\|"middle"}`. Synthetic mouse click at a viewport pixel (the `/screenshot` coordinate space) — motion + press + release through the real GUI/`_unhandled_input` pipeline; works headless. |
 | `GET` | `/nodes?group=<name>` | Returns `[ {path, name, type, position?, properties?}, ... ]` for nodes in the named group. |
 | `GET` | `/screenshot` | Captures the main viewport and returns raw image bytes (`image/png` by default). Optional `?format=png\|jpg\|webp` and `?quality=<0.01-1.0>` (jpg only). No filesystem write on the game side. |
-| `GET` | `/ui/controls` | Lists every `BaseButton` in the current scene whose `agent_id` metadata is set: `[{id, type, text?, disabled, visible, pressed?}]`. |
+| `GET` | `/ui/controls` | Lists every `BaseButton` in the current scene whose `agent_id` metadata is set: `[{id, type, text?, disabled, visible, pressed?, rect}]` — `rect` is the on-screen rectangle (plus `center_x`/`center_y`) in the `/input/click` coordinate space, so click scenarios never hardcode layout. |
 | `POST` | `/ui/press` | Body `{"id": "<agent_id>"}`. Emits the button's `Pressed` signal (toggles flip `ButtonPressed` first). `400` if disabled / hidden / ambiguous; `404` if not found. |
 | `GET` | `/example/state` | Stub demonstrating the typed domain-interface pattern: looks up an `IAgentExample` implementer in the `agent_example` group and returns its state. See `scripts/server/IAgentExample.cs` for the pattern to copy when adding real domain surfaces (inventory, quest log, NPCs, etc.). |
-| `GET` | `/display/state` | Snapshot of the global UI scale (`DisplayScale` autoload, group `agent_display`): effective/auto factors, override flag, monitor scale/DPI. Always present — never 503s. |
-| `POST` | `/display/set` | Body `{"factor": <1.0-3.0>}` or `{"auto": true}`. Sets or clears the UI-scale override; returns the `{ok, state, error?}` envelope. |
+| `GET` | `/display/state` | Snapshot of the display settings (`DisplayScale` autoload, group `agent_display`): effective/auto scale factors, override flag, `window_mode` (the persisted setting), monitor scale/DPI. Always present — never 503s. |
+| `POST` | `/display/set` | Body `{"factor": <1.0-3.0>}` or `{"auto": true}`. Sets or clears the UI-scale override (persisted to the player profile); returns the `{ok, state, error?}` envelope. |
+| `POST` | `/display/window` | Body `{"mode": "windowed"\|"fullscreen"}`. Sets the persisted window-mode setting and applies it to the live window (borderless fullscreen — no exclusive mode). `400` on any other mode. `{ok, state, error?}` envelope. |
 | `POST` or `GET` | `/quit` | Optional `?code=<int>` query (or JSON body `{"code": <int>}` on POST). Calls `GetTree().Quit(code)` after a 5-frame delay so the response flushes first. `GET` is accepted because Windows HTTP.sys rejects bodyless POSTs with 411. |
 
 Per-node JSON includes `position` for `Node2D`/`Node3D` and a `properties` object for nodes that implement `godottemplate.Server.IAgentInspectable` (`scripts/server/IAgentInspectable.cs`). Implementers return a `Dictionary<string, object>` of extra fields. The HTTP listener runs on a background task; all handlers execute on the main thread inside `_Process` so they may freely touch the scene tree. See `scripts/server/README.md` for examples.
 
 Every domain-route mutation (the `/example/*`-style routes you'll add) should return `{ok, state, error?}` where `state` is the full domain snapshot after the operation. Keep error envelopes consistent so a single client helper can handle them all.
+
+**Bodyless mutations accept `GET`.** Windows HTTP.sys rejects a bodyless `POST` with `411 Length Required` before the app ever sees it, so any mutation route that can be called without a body also accepts `GET`, mirroring its body fields as query parameters (`/quit?code=N` is the shipped example). Follow the idiom for every bodyless route you add, and use the `GET` form in scripts.
 
 ### Generic UI control pattern
 
@@ -97,7 +114,8 @@ metadata/agent_id = "main_menu.play"
 
 Conventions:
 
-- **IDs are scene-prefixed and dot-delimited** (`main_menu.play`, `main.quit`, future `settings.apply`). Globally unique.
+- **IDs are scene-prefixed and dot-delimited** (`main_menu.play`, `main.quit`, future `settings.apply`). Globally unique. Dynamically built buttons (list rows, tabs, cards) follow the same convention with a data-derived tail (`settings.tab.<name>`, `list.select.<key>` — set via `button.SetMeta("agent_id", ...)`), so data-driven UIs stay agent-drivable with zero per-item code.
+- Buttons on a hidden panel are listed with `visible: false` and reject `/ui/press` with `400` — scenarios must walk the real navigation flow to reach them, so a broken navigation path fails observably instead of silently pressing invisible buttons.
 - **Stable across refactors** — the ID is the API contract; node names / paths can change freely.
 - Only `BaseButton` nodes are picked up. For richer affordances (sliders, dropdowns, drag targets) add a typed interface following the `IAgentInspectable` pattern when needed.
 - For systems that already have bespoke endpoints (typed domain interfaces — see below), keep using those — `agent_id` is for top-level navigation and one-off actions, not for high-frequency authoring loops.
@@ -124,7 +142,7 @@ Two variants of the pattern ship as working examples:
 Top-level screens swapped with `GetTree().ChangeSceneToFile(...)` can't pass arguments, so anything that must survive a swap lives on an autoload. The shape that has worked well is a **trio**:
 
 - **A session carrier** (e.g. `GameSession`): the *transient* state handed from one screen to the next — the accepted mission, the chosen loadout. Process-lifetime, but conceptually scoped to "the current run"; it is not persisted.
-- **A durable profile** (e.g. `PlayerProfile`): the *permanent* player state — currency, unlocks, progression. It owns its mutation rules (purchases, rewards) and persists to disk through a companion store class.
+- **A durable profile** (`PlayerProfile` — `scripts/session/PlayerProfile.cs`, a lazy-loading static class shipped as working reference code): the *permanent* player state — today the display settings; later currency, unlocks, progression. It owns its mutation rules and persists to disk through a companion store class (`ProfileStore`). The `GODOT_PROFILE_MEMORY` env var makes it memory-only for a process (the Hurl runners pin it).
 - **A constants class** (e.g. `GameConstants`): game-wide tunables that are neither per-scene nor per-content-definition. Plain `static` class, not an autoload.
 
 Register the autoloads in `project.godot` `[autoload]`. Keep per-scene state on the scene's own controller — it should die with the scene.
@@ -137,7 +155,7 @@ When the durable profile grows disk persistence, follow these four rules (proven
 4. **Save after every durable mutation.** Call `Save()` at the end of each mutating operation (purchase, reward, settings change) rather than on quit — quit paths are unreliable (crashes, task kills), and the writes are tiny.
 
 ### Directory Layout
-- `scripts/` — C# game logic. Add subdirectories per system (e.g. `units/`, `world/`) as the project grows. Shared UI scaffolding (scene-path registry, palette, display scale) lives in `scripts/ui/`; stateless cross-system helpers go in `scripts/util/`.
+- `scripts/` — C# game logic. Add subdirectories per system (e.g. `units/`, `world/`) as the project grows. `scripts/core/` is the **engine-free** layer — pure C# with no Godot types, compiled directly into the `tests/unit/` xUnit project as the boundary check. `scripts/session/` holds the cross-scene persistence trio's durable leg (`PlayerProfile`/`ProfileStore`). Shared UI scaffolding (scene-path registry, palette, display scale) lives in `scripts/ui/`; stateless cross-system helpers go in `scripts/util/`.
 - `scenes/` — `.tscn` scene files, mirroring the structure of `scripts/`.
 - `resources/` — `.tres` content files (`[GlobalClass]` Resource subclasses). See `resources/README.md` for the C# `.tres` format requirements.
 - `shaders/` — `.gdshader` files.
@@ -157,6 +175,8 @@ Always define UI panel structure in a `.tscn` file, not entirely in C#. Control 
 - **Collision layers**: when introducing physics interactions, document the layer/mask assignments here.
 - **Groups**: when introducing scene-tree groups (gameplay membership, REST domain-interface lookup, etc.), document the names here. The template uses `player` (demo), `agent_example` (typed-interface stub), and `agent_display` (the `DisplayScale` autoload, `/display/*` — always present) out of the box.
 - **Resource references**: prefer exported `PackedScene`/resource references on scene roots, or a small content registry resource, over hardcoding `GD.Load<T>(...)` paths in runtime classes. See `resources/README.md` for the C# `.tres` script-binding requirements.
+- **Node-typed `[Export]`s in hand-authored `.tscn`s**: a `Node`-derived export serializes as `Prop = NodePath("...")` **plus** a `node_paths=PackedStringArray("Prop")` attribute on the `[node]` header. Omitting the attribute makes the reference silently load as null (the editor writes it automatically; hand edits must include it).
+- **`[Tool]` scripts**: editor-only paths guard with `Engine.IsEditorHint()`; the editor only sees tool-script changes after `dotnet build`.
 
 ## Local Godot Docs
 
@@ -167,3 +187,11 @@ When invoking `opencode run` for doc exploration, frame the prompt so it:
 2. Specifies that only a **concise summary** should be returned as output — no raw file contents or tool call results.
 
 Example: `opencode run "Explore the Godot 4 documentation at <project-root>/docs to understand how <Topic> works. Return only a concise summary of key properties, signals, methods, and usage patterns."`
+
+## Misc Agent direction
+
+*(Opt-in content-boundary policy — keep, adjust, or delete per project.)*
+
+- Sprites should only ever be human-authored. **NEVER** author sprites for any reason. If you need a placeholder sprite, use `icon.svg` in the project root.
+- ANY text that qualifies as "prose", IE is not strictly technical and will meet with player eyes, should be generated as Lorem Ipsum. Headers, button values, and other one-or-two-word verbs are fine. Guide entries and item/spell descriptions are examples of what should be left to the human. In general, a human is responsible for all prose that involves more than a glance, and we should make it obvious what needs their attention by using obvious placeholder text.
+- If the human asks about what the current or next session should target, offer suggestions based on unchecked items in `milestones.md`.

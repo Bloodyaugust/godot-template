@@ -1,0 +1,163 @@
+name: Publish to itch.io
+
+# Windows + Linux release pipeline.
+# - Push a `v*` tag (e.g. v0.2.0): builds both platforms, smoke-checks, uploads
+#   the builds as workflow artifacts, and — when ITCH_PROJECT below is set —
+#   publishes to itch.io with the tag as the version.
+# - Manual workflow_dispatch: build + smoke check only (dry run, no publish);
+#   the builds land as workflow artifacts.
+# Publishing requires ITCH_PROJECT below ("<user>/<game>") and the
+# BUTLER_API_KEY repository secret (itch.io API key).
+#
+# Runs on Linux: Godot cross-exports the Windows build fine (the export
+# template exes are prebuilt; the C# side is a dotnet publish targeting
+# win-x64). The smoke check runs the *Linux* export natively — everything
+# project-specific (pck, data dir, boot path) is identical across the two
+# exports, and the Windows exe itself is an upstream-built template binary.
+# The Windows Godot editor is a GUI-subsystem exe that detaches from the
+# console (no exit codes); the Linux binary is a plain console process.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.7-stable
+  GODOT_TEMPLATES_DIR_NAME: 4.7.stable.mono
+  GODOT_BIN: ~/godot/Godot_v4.7-stable_mono_linux_x86_64/Godot_v4.7-stable_mono_linux.x86_64
+  # Must match the export_presets.cfg export paths (build/windows/<name>.exe,
+  # build/linux/<name>.x86_64).
+  BINARY_NAME: godot-template
+  # Set to "<user>/<game>" (e.g. mystudio/my-game) to enable the butler publish
+  # leg on tag builds. Empty = tag builds stop at artifacts (no publish).
+  ITCH_PROJECT: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Cache Godot editor + export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-mono-linux
+
+      - name: Download Godot editor + export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          curl -sL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_mono_linux_x86_64.zip"
+          mkdir -p ~/godot
+          unzip -q godot.zip -d ~/godot
+          chmod +x ${GODOT_BIN/#\~/$HOME}
+          curl -sL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_mono_export_templates.tpz"
+          tpl_dir=~/.local/share/godot/export_templates/${GODOT_TEMPLATES_DIR_NAME}
+          mkdir -p "$tpl_dir"
+          unzip -q templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates/* "$tpl_dir"
+
+      # GameVersion.Current (scripts/core/GameVersion.cs) is the single
+      # authoritative version: tag builds verify the tag against it; dry runs
+      # derive a -dev.<run> label from it. config/version is stamped FROM it —
+      # derived export metadata, never a source. (If the project grows shipped
+      # changelog notes, require the release's notes file here too.)
+      - name: Resolve version from GameVersion.Current
+        id: version
+        run: |
+          current=$(sed -n 's/.*public const string Current = "\([^"]*\)".*/\1/p' scripts/core/GameVersion.cs)
+          if [ -z "$current" ]; then
+            echo "could not extract GameVersion.Current from scripts/core/GameVersion.cs"
+            exit 1
+          fi
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            v="${GITHUB_REF_NAME#v}"
+            if [ "$v" != "$current" ]; then
+              echo "tag ${GITHUB_REF_NAME} does not match GameVersion.Current ($current) - bump the constant before tagging"
+              exit 1
+            fi
+          else
+            v="${current}-dev.${{ github.run_number }}"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Build version: $v"
+
+      - name: Stamp version into project.godot
+        run: sed -i 's|^config/version=".*"|config/version="${{ steps.version.outputs.version }}"|' project.godot
+
+      - name: Build solution
+        run: dotnet build
+
+      - name: Import assets
+        run: ${GODOT_BIN/#\~/$HOME} --headless --import --path .
+
+      - name: Export Windows release
+        run: |
+          mkdir -p build/windows
+          ${GODOT_BIN/#\~/$HOME} --headless --export-release "Windows Release" "build/windows/${BINARY_NAME}.exe" --path .
+          test -f "build/windows/${BINARY_NAME}.exe" || { echo "export produced no exe"; exit 1; }
+          ls -lR build/windows
+
+      - name: Export Linux release
+        run: |
+          mkdir -p build/linux
+          ${GODOT_BIN/#\~/$HOME} --headless --export-release "Linux Release" "build/linux/${BINARY_NAME}.x86_64" --path .
+          test -f "build/linux/${BINARY_NAME}.x86_64" || { echo "export produced no binary"; exit 1; }
+          ls -lR build/linux
+
+      - name: Smoke check (exported binary boots headless)
+        run: |
+          chmod +x "build/linux/${BINARY_NAME}.x86_64"
+          timeout 180 "build/linux/${BINARY_NAME}.x86_64" --headless --quit-after 120
+          echo "Exported binary booted headless and exited cleanly."
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-windows-${{ steps.version.outputs.version }}
+          path: build/windows
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-linux-${{ steps.version.outputs.version }}
+          path: build/linux
+
+      - name: Check publish secret
+        if: github.ref_type == 'tag' && env.ITCH_PROJECT != ''
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then
+            echo "BUTLER_API_KEY repository secret is not set - cannot publish to itch.io"
+            exit 1
+          fi
+
+      - name: Install butler
+        if: github.ref_type == 'tag' && env.ITCH_PROJECT != ''
+        run: |
+          curl -sL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          mkdir -p ~/butler
+          unzip -q butler.zip -d ~/butler
+          chmod +x ~/butler/butler
+          ~/butler/butler -V
+
+      - name: Push to itch.io
+        if: github.ref_type == 'tag' && env.ITCH_PROJECT != ''
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          ~/butler/butler push build/windows "${ITCH_PROJECT}:windows" --userversion "${{ steps.version.outputs.version }}"
+          ~/butler/butler push build/linux "${ITCH_PROJECT}:linux" --userversion "${{ steps.version.outputs.version }}"

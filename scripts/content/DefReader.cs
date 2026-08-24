@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 using godottemplate.Util;
 
@@ -30,6 +31,22 @@ public sealed class DefReader
     }
 
     public bool Has(string key) => _dict.ContainsKey(key);
+
+    /// <summary>Whether the key is present AND holds a JSON object — for fields that accept a string or an object form.</summary>
+    public bool IsObject(string key)
+        => _dict.ContainsKey(key) && _dict[key].VariantType == Variant.Type.Dictionary;
+
+    /// <summary>
+    /// Every key of this object, for map-shaped blocks whose keys are data (e.g. a
+    /// modifiers map — validated against a closed set by the caller).
+    /// </summary>
+    public IEnumerable<string> Keys
+    {
+        get
+        {
+            foreach (var key in _dict.Keys) yield return key.AsString();
+        }
+    }
 
     private Variant Require(string key)
     {
