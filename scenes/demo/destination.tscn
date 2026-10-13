@@ -1,0 +1,96 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/demo/DestinationScreen.cs" id="1_dest"]
+[ext_resource type="Script" path="res://scripts/ui/PaletteRect.cs" id="2_rect"]
+[ext_resource type="PackedScene" path="res://scenes/ui/top_bar.tscn" id="3_topbar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/menu_overlay.tscn" id="4_menu"]
+
+[node name="Destination" type="Node2D"]
+script = ExtResource("1_dest")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Background" type="ColorRect" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_rect")
+Fill = 1
+
+[node name="Center" type="CenterContainer" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Column" type="VBoxContainer" parent="UI/Center"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="UI/Center/Column"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Destination"
+horizontal_alignment = 1
+
+[node name="Body" type="Label" parent="UI/Center/Column"]
+layout_mode = 2
+text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Payload" type="Label" parent="UI/Center/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "-"
+horizontal_alignment = 1
+
+[node name="ReturnButton" type="Button" parent="UI/Center/Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+disabled = true
+text = "Return"
+metadata/agent_id = "destination.return"
+
+[node name="Chrome" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Root" type="Control" parent="Chrome"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Layout" type="VBoxContainer" parent="Chrome/Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" parent="Chrome/Root/Layout" instance=ExtResource("3_topbar")]
+unique_name_in_owner = true
+layout_mode = 2
+Title = "Destination"
+MenuAgentId = "destination.menu"
+
+[node name="MenuOverlay" parent="Chrome/Root" instance=ExtResource("4_menu")]
+unique_name_in_owner = true
+layout_mode = 1
+AgentIdPrefix = "destination.menu"

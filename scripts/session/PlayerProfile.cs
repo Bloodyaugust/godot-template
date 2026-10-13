@@ -52,6 +52,15 @@ public static class PlayerProfile
         });
     }
 
+    /// <summary>
+    /// Memory-only for this process (<c>GODOT_PROFILE_MEMORY</c>): nothing player-owned
+    /// touches disk. Other durable stores (<see cref="RecordStore{T}"/>) follow it.
+    /// </summary>
+    public static bool MemoryOnly
+    {
+        get { EnsureLoaded(); return _memoryMode; }
+    }
+
     /// <summary>Explicit UI-scale override, or null to follow the monitor-derived auto factor.</summary>
     public static float? ScaleOverride
     {

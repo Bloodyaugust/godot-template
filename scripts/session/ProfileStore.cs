@@ -8,7 +8,12 @@ namespace godottemplate.Session;
 /// Disk snapshot of <see cref="PlayerProfile"/> — the DTO that decouples the
 /// <c>user://profile.json</c> format from live profile state (CLAUDE.md
 /// durable-persistence rules). Missing optional fields deserialize to their
-/// defaults, so the schema can grow without a format-version bump.
+/// defaults, so the schema can grow without a format-version bump: add a new field
+/// as a <b>nullable</b> property documented "Absent in older files", and have
+/// <see cref="PlayerProfile"/> treat null as its default (e.g. a
+/// <c>Dictionary&lt;string, string&gt;</c> that loads as null from an older file is an
+/// empty map). Bump <c>FormatVersion</c> only for an incompatible change (a rename,
+/// a changed meaning) — that discards older files.
 /// </summary>
 public sealed class ProfileSnapshot
 {

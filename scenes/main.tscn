@@ -1,23 +1,75 @@
-[gd_scene load_steps=3 format=3 uid="uid://crugjb6ckvs0s"]
+[gd_scene load_steps=7 format=3 uid="uid://crugjb6ckvs0s"]
 
-[ext_resource type="Script" path="res://scripts/test/Player.cs" id="1_player"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="2_icon"]
+[ext_resource type="Script" path="res://scripts/ui/MainScreen.cs" id="1_main"]
+[ext_resource type="Script" path="res://scripts/test/Player.cs" id="2_player"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="3_icon"]
+[ext_resource type="Script" path="res://scripts/camera/ZoomCamera.cs" id="4_camera"]
+[ext_resource type="PackedScene" path="res://scenes/ui/top_bar.tscn" id="5_topbar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/menu_overlay.tscn" id="6_menu"]
 
 [node name="Main" type="Node2D"]
+script = ExtResource("1_main")
 
 [node name="Player" type="Sprite2D" parent="."]
+unique_name_in_owner = true
 position = Vector2(576, 324)
-texture = ExtResource("2_icon")
-script = ExtResource("1_player")
+texture = ExtResource("3_icon")
+script = ExtResource("2_player")
+
+[node name="Camera" type="Camera2D" parent="Player"]
+unique_name_in_owner = true
+script = ExtResource("4_camera")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="QuitButton" type="Button" parent="UI"]
 offset_left = 16.0
-offset_top = 16.0
+offset_top = 72.0
 offset_right = 96.0
-offset_bottom = 48.0
+offset_bottom = 104.0
 text = "Quit"
 metadata/agent_id = "main.quit"
+
+[node name="TravelButton" type="Button" parent="UI"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 112.0
+offset_right = 96.0
+offset_bottom = 144.0
+text = "Travel"
+metadata/agent_id = "main.travel"
+
+[node name="Chrome" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Root" type="Control" parent="Chrome"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Layout" type="VBoxContainer" parent="Chrome/Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" parent="Chrome/Root/Layout" instance=ExtResource("5_topbar")]
+unique_name_in_owner = true
+layout_mode = 2
+Title = "Main"
+MenuAgentId = "main.menu"
+
+[node name="MenuOverlay" parent="Chrome/Root" instance=ExtResource("6_menu")]
+unique_name_in_owner = true
+layout_mode = 1
+AgentIdPrefix = "main.menu"
 
 [connection signal="pressed" from="UI/QuitButton" to="Player" method="OnQuitPressed"]

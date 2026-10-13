@@ -1,0 +1,84 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/MenuOverlay.cs" id="1_menu"]
+[ext_resource type="Script" path="res://scripts/ui/PaletteRect.cs" id="2_rect"]
+[ext_resource type="PackedScene" path="res://scenes/ui/settings_panel.tscn" id="3_settings"]
+
+[node name="MenuOverlay" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Scrim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_rect")
+Fill = 3
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Stack" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="Center/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Center/Stack/MenuPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Rows" type="VBoxContainer" parent="Center/Stack/MenuPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Center/Stack/MenuPanel/Margin/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Menu"
+
+[node name="SettingsButton" type="Button" parent="Center/Stack/MenuPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Settings"
+
+[node name="QuitButton" type="Button" parent="Center/Stack/MenuPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quit"
+
+[node name="CloseButton" type="Button" parent="Center/Stack/MenuPanel/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close"
+
+[node name="SettingsPanel" parent="Center/Stack" instance=ExtResource("3_settings")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[connection signal="pressed" from="Center/Stack/MenuPanel/Margin/Rows/SettingsButton" to="." method="OnSettingsPressed"]
+[connection signal="pressed" from="Center/Stack/MenuPanel/Margin/Rows/QuitButton" to="." method="OnQuitPressed"]
+[connection signal="pressed" from="Center/Stack/MenuPanel/Margin/Rows/CloseButton" to="." method="Close"]

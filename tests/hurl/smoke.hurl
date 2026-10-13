@@ -13,14 +13,15 @@ HTTP 200
 [Asserts]
 jsonpath "$.running" == true
 
-# ── 1. The demo scene exposes its quit button via agent_id metadata ───────────
+# ── 1. The demo scene exposes its buttons via agent_id metadata: the demo quit
+#      button first, then the top bar's Menu (the menu overlay's walk: menu.hurl) ──
 GET http://{{host}}/ui/controls
 HTTP 200
 [Asserts]
-jsonpath "$" count == 1
 jsonpath "$[0].id" == "main.quit"
 jsonpath "$[0].visible" == true
 jsonpath "$[0].disabled" == false
+jsonpath "$[?(@.id == 'main.menu' && @.visible == true)]" exists
 
 # ── 2. Group query: the demo Player registers in the 'player' group ───────────
 GET http://{{host}}/nodes?group=player

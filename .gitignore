@@ -2,7 +2,10 @@
 .godot/
 /android/
 
-docs/
+# Local Godot docs (see CLAUDE.md). The tracked .gdignore keeps the editor from importing
+# the thousands of images inside as game assets, even before the docs are downloaded.
+docs/*
+!docs/.gdignore
 
 # Local tooling
 *.csproj.lscache
@@ -19,3 +22,8 @@ tests/unit/obj/
 # packs earlier exports' loose resource-typed files (e.g. deps.json) into later pcks.
 build/*
 !build/.gdignore
+
+# Scratch space for local files (screenshots, notes). The tracked .gdignore hides it from
+# Godot's scanner so nothing dropped here gets imported as a game asset.
+tmp/*
+!tmp/.gdignore

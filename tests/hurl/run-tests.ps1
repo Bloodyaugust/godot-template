@@ -39,6 +39,12 @@ if (-not $Files -or $Files.Count -eq 0) {
 # must never touch the developer's real user://profile.json (display-settings
 # mutations included — display_input.hurl).
 $env:GODOT_PROFILE_MEMORY = '1'
+# The instances we boot listen on the port the scenarios are aimed at, so -Port can run
+# beside a game already holding the default one.
+$env:GODOT_AGENT_REST_PREFIX = "http://$hostPort/"
+# Per-tool env overrides go here too: a dev tool that writes files (a save path, an
+# export dir) gets an env var pointing it under tmp/hurl/, never over tracked content
+# (and is removed again below).
 
 $failed = 0
 foreach ($f in $Files) {
@@ -61,15 +67,15 @@ foreach ($f in $Files) {
     } finally {
         # The file quits itself on success; force teardown on any failure path.
         try { Invoke-RestMethod "http://$hostPort/quit" -TimeoutSec 3 | Out-Null } catch {}
-        Start-Sleep -Milliseconds 800
-        $up = $true
-        try { Invoke-WebRequest "http://$hostPort/status" -TimeoutSec 2 -UseBasicParsing | Out-Null } catch { $up = $false }
-        # Only ever kill the specific PID we launched — never godot-mono by name.
-        if ($up -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+        # Wait for the instance we launched to exit (up to 10 s), so the next file's status
+        # wait can't reach this one while it shuts down. Only ever kill the specific PID we
+        # launched — never godot-mono by name.
+        if (-not $proc.WaitForExit(10000)) { Stop-Process -Id $proc.Id -Force }
     }
 }
 
 Remove-Item Env:GODOT_PROFILE_MEMORY -ErrorAction SilentlyContinue
+Remove-Item Env:GODOT_AGENT_REST_PREFIX -ErrorAction SilentlyContinue
 
 if ($failed -gt 0) { Write-Host "`nFAILED: $failed file(s)"; exit 1 }
 Write-Host "`nAll Hurl tests passed"

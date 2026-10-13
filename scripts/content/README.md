@@ -6,11 +6,26 @@ objects the rest of the game looks up by id. Use it when game content (unit type
 item catalogs, generation recipes) is better authored as plain JSON than as `.tres`
 resources or hardcoded C#.
 
+## The split: core parses, Godot reads
+
+Parsing and validation are **engine-free** (`scripts/core/content/`, unit-tested in
+`tests/unit/Content/`): `JsonDefReader` works on injected text. This directory does only
+what needs Godot — reads `res://` files, loads textures and other resources a
+definition references (checking they exist), and latches failures. A domain whose files
+cross-reference each other can expose an engine-free `Parse(Func<string, string> read)`
+taking `ContentLoader.ReadText` as the reader, so the unit tests feed it the same files
+from disk.
+
 | File | Role |
 |------|------|
-| `ContentLoader.cs` | Reads a definitions file (`res://resources/definitions/<name>.json`) via `FileAccess` + Godot `Json` and returns its top-level array; throws a `ContentException` on a missing file, malformed JSON, or non-array root. |
-| `DefReader.cs` | A typed, fail-loud accessor over one parsed JSON object: required/optional getters for strings, ints, floats, bools, string arrays, `[min, max]` int/float **ranges** (`IntRange`/`FloatRange` from `scripts/util/Ranges.cs`), an `[x, y]` `Vector2`, and nested objects/arrays — plus `IsObject` (for fields that accept a string or an object form) and `Keys` (for map-shaped blocks whose keys are data, validated against a closed set by the caller). Throws a contextual `ContentException` (naming the file + entry) on a missing required key or wrong type. |
-| `ContentException.cs` | The content-error type. Constructing one also emits `GD.PushError` so the failure shows as one clean console line before it propagates — content errors are hard, loud failures, never a silent empty world. |
+| `ContentLoader.cs` | Reads a definitions file (`res://resources/definitions/<name>.json`) via `FileAccess`: `ReadText` returns the raw text (for an injected-reader `Parse`), `LoadArray<T>(file, each)` hands it to `JsonDefReader.ParseArray` and maps each element. A missing file or any engine-free `ContentError` surfaces as a logged `ContentException`. |
+| `ContentException.cs` | The Godot-side content-error type. Constructing one also emits `GD.PushError` so the failure shows as one clean console line before it propagates — content errors are hard, loud failures, never a silent empty world. `From(ContentError)` bridges an engine-free error. |
+
+The reader itself (`scripts/core/content/JsonDefReader.cs`): typed required/optional
+getters for non-empty strings, **integers only** (a fractional number is rejected),
+bools, string lists, `[x, y]` integer pairs, string/int maps, nested arrays, and
+snake_case enums (`ReqEnum<T>`); `RejectUnknownKeys` catches typoed keys. Every failure
+is a `ContentError` naming the file and entry.
 
 Namespace: `godottemplate.Content`.
 
@@ -20,8 +35,8 @@ The template ships the load path only; each game adds its own definition classes
 registries on top. The shape that has worked well (proven in spun-out projects):
 
 1. **One registry per definition type** (`StructureRegistry`, `EnemyRegistry`, …): a
-   static class that lazily calls `ContentLoader.LoadArray("<file>.json")` on first
-   access, parses each entry with a `DefReader`, and stores it by id behind
+   static class that lazily calls `ContentLoader.LoadArray("<file>.json", ...)` on first
+   access, parses each entry with a `JsonDefReader`, and stores it by id behind
    `Get(id)` / `Has(id)` / `All()` accessors. Reject duplicate ids at load.
 2. **A failed load latches.** Constructing a `ContentException` also logs it, so
    re-parsing on every call (an editor `_Draw` hits a registry 60×/s) would flood
@@ -37,7 +52,12 @@ registries on top. The shape that has worked well (proven in spun-out projects):
    not re-sort.
 5. **Keep loads independent** — registries store only id *strings* for
    cross-references, never objects from another registry, so init order doesn't matter.
-6. **Validate cross-file references once at startup**: a single
+6. **Keep validation engine-free where you can.** A load-time check that needs no
+   Godot (duplicates, references, derived sets) belongs in a `scripts/core/` parser
+   throwing `ContentError` — then it is unit-tested; the registry only bridges it with
+   `ContentException.From`. Checks that need Godot (a `sprite` path resolves to a
+   texture) stay here.
+7. **Validate cross-file references once at startup**: a single
    `ValidateReferences()` pass (called from an autoload's `_EnterTree`) checks that
    every cross-registry id resolves, throwing a `ContentException` on a dangling
    reference. A bad file then fails at boot with a clear
@@ -67,11 +87,14 @@ public static class ThingRegistry
     {
         var byId = new Dictionary<string, ThingDef>();
         var ordered = new List<ThingDef>();
-        foreach (var entry in ContentLoader.LoadArray(FileName))
+        var defs = ContentLoader.LoadArray(FileName, (el, i) =>
         {
-            var dict = entry.AsGodotDictionary();
-            var id = new DefReader(dict, FileName, "thing").OptString("id", "?");
-            var def = new ThingDef(new DefReader(dict, FileName, $"thing '{id}'"));
+            var r = new JsonDefReader(el, FileName, $"thing [{i}]");
+            r.RejectUnknownKeys("id", "name", "cost");
+            return new ThingDef(r.ReqString("id"), r.ReqString("name"), r.ReqInt("cost"));
+        });
+        foreach (var def in defs)
+        {
             if (byId.ContainsKey(def.Id))
                 throw ContentException.For(FileName, $"duplicate thing id '{def.Id}'");
             byId[def.Id] = def;

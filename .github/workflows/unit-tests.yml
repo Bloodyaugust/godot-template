@@ -1,0 +1,28 @@
+name: Unit tests
+
+# The engine-free xUnit rig (tests/unit/) on every push and pull request, on both
+# Windows and Linux. The two platforms matter: the matrix catches platform-dependent
+# behavior in the engine-free layer (scripts/core/) — path separators, line endings,
+# culture-sensitive formatting, floating-point differences — before it ships.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run the engine-free unit tests
+        run: dotnet test tests/unit/godottemplate.Tests.csproj --nologo

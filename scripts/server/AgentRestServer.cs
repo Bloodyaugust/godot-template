@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -16,8 +17,6 @@ public partial class AgentRestServer : Node
     private const string DefaultPrefix = "http://127.0.0.1:8080/";
     private const long MaxBodyBytes = 65536;
     private const string AgentIdMeta = "agent_id";
-    private const string AgentExampleGroup = "agent_example";
-    private const string AgentDisplayGroup = "agent_display";
 
     private HttpListener _listener;
     private CancellationTokenSource _cts;
@@ -34,7 +33,22 @@ public partial class AgentRestServer : Node
             QueueFree();
             return;
         }
+        SizeHeadlessWindow();
         StartListener();
+    }
+
+    // The headless display server starts the root window at a 64x64 placeholder (and
+    // ignores --resolution), which collapses any real layout: anchored panels overflow and
+    // /ui/controls rects land off-screen. Headless runs are agent test runs, so give the
+    // window the project's configured viewport size — the same layout a windowed boot
+    // gets — keeping click/rect coordinates meaningful.
+    private void SizeHeadlessWindow()
+    {
+        if (DisplayServer.GetName() != "headless") return;
+        var size = new Vector2I(
+            (int)ProjectSettings.GetSetting("display/window/size/viewport_width"),
+            (int)ProjectSettings.GetSetting("display/window/size/viewport_height"));
+        GetWindow().Size = size;
     }
 
     public override void _ExitTree()
@@ -147,15 +161,27 @@ public partial class AgentRestServer : Node
         if (method == "GET" && path == "/status") return HandleStatus();
         if (method == "POST" && path == "/input/action") return HandleInputAction(ctx.Request);
         if (method == "POST" && path == "/input/click") return HandleInputClick(ctx.Request);
+        if (method == "POST" && path == "/input/move") return HandleInputMove(ctx.Request);
+        if (method == "POST" && path == "/input/drag") return HandleInputDrag(ctx.Request);
         if (method == "GET" && path == "/nodes") return HandleNodes(ctx.Request);
         if (method == "GET" && path == "/screenshot") return HandleScreenshot(ctx.Request);
         if (method == "GET" && path == "/ui/controls") return HandleUiControls();
         if (method == "POST" && path == "/ui/press") return HandleUiPress(ctx.Request);
-        if (method == "GET" && path == "/example/state") return HandleExampleState();
-        if (method == "GET" && path == "/display/state") return HandleDisplayState();
-        if (method == "POST" && path == "/display/set") return HandleDisplaySet(ctx.Request);
-        if (method == "POST" && path == "/display/window") return HandleDisplayWindow(ctx.Request);
-        if ((method == "POST" || method == "GET") && path == "/quit") return HandleQuit(ctx.Request);
+        if (method == "GET" && path == "/example/state") return State(Example);
+        if (method == "GET" && path == "/display/state") return State(Display);
+        if (method == "GET" && path == "/debug/state") return State(Debug);
+        if (method == "GET" && path == "/camera/state") return State(Camera);
+        if (method == "GET" && path == "/transition/state") return State(TransitionSurface);
+        if (method == "GET" && path == "/session/state") return State(Session);
+        if (method == "GET" && path == "/demo/state") return State(Demo);
+        bool getOrPost = method == "POST" || method == "GET";
+        if (getOrPost && path == "/display/set") return HandleDisplaySet(ctx.Request);
+        if (getOrPost && path == "/display/window") return HandleDisplayWindow(ctx.Request);
+        if (getOrPost && path == "/debug/set") return HandleDebugSet(ctx.Request);
+        if (getOrPost && path == "/camera/zoom") return HandleCameraZoom(ctx.Request);
+        if (getOrPost && path == "/transition/skip") return Route(ctx.Request, TransitionSurface, Array.Empty<string>(), (t, _) => t.SkipHold());
+        if (getOrPost && path == "/transition/demo") return HandleTransitionDemo(ctx.Request);
+        if (getOrPost && path == "/quit") return HandleQuit(ctx.Request);
 
         return ResponseData.Error(404, $"unknown route {method} {path}");
     }
@@ -173,12 +199,20 @@ public partial class AgentRestServer : Node
         // never claim to be the release of the same number) is applied here.
         var gameVersion = godottemplate.Core.GameVersion.Current + (OS.IsDebugBuild() ? "-dev" : "");
 
+        var window = GetWindow();
         var payload = new Dictionary<string, object>
         {
             ["running"] = true,
             ["scene"] = sceneName,
             ["godot_version"] = versionString,
             ["game_version"] = gameVersion,
+            // Window pixels (/ui/controls rects and click coords are these divided by the
+            // DisplayScale factor) — lets a headless scenario confirm the boot sized it.
+            ["window"] = new Dictionary<string, object>
+            {
+                ["width"] = window?.Size.X ?? 0,
+                ["height"] = window?.Size.Y ?? 0,
+            },
         };
         return ResponseData.Json(200, payload);
     }
@@ -225,75 +259,63 @@ public partial class AgentRestServer : Node
         return ResponseData.Json(200, new Dictionary<string, object> { ["ok"] = true });
     }
 
-    // Injects a synthetic mouse click at a viewport pixel so agents can exercise the
-    // human input path (click-to-select, placement commit) that bypasses /ui and the
-    // typed domain routes. Warps the mouse first so handlers reading
-    // GetGlobalMousePosition() see the clicked point, then parses a press+release that
-    // flows through the normal GUI -> _unhandled_input pipeline like a real click.
+    // ---- Synthetic pointer input (/input/click, /input/move, /input/drag) ----
+    //
+    // Coordinates are canvas pixels — the /ui/controls rect space (/screenshot pixels
+    // divided by the DisplayScale factor). Events go through Viewport.PushInput with
+    // inLocalCoords: true rather than Input.ParseInputEvent: parsed OS events need a real
+    // window and a valid window->content stretch transform, neither of which exists
+    // headless, while local-coords PushInput enters the same GUI -> _unhandled_input
+    // pipeline directly in both modes and at any content scale factor. A leading motion
+    // event establishes GUI hover state, which BaseButton requires before a release emits
+    // `pressed` — real clicks are always preceded by motion. The warp keeps the OS cursor
+    // (and GetGlobalMousePosition readers) roughly in sync when windowed; it is a no-op
+    // headless.
+
+    private void PushMotion(Vector2 at, Vector2 relative = default, MouseButtonMask mask = 0)
+        => GetViewport().PushInput(new InputEventMouseMotion
+        {
+            Position = at,
+            GlobalPosition = at,
+            Relative = relative,
+            ButtonMask = mask,
+        }, true);
+
+    private void PushButton(Vector2 at, MouseButton index, bool pressed, MouseButtonMask mask = 0)
+        => GetViewport().PushInput(new InputEventMouseButton
+        {
+            ButtonIndex = index,
+            Pressed = pressed,
+            Position = at,
+            GlobalPosition = at,
+            ButtonMask = mask,
+            Factor = 1f, // a wheel step's strength; ignored for real buttons
+        }, true);
+
+    // Synthetic click (or one wheel step) at a canvas pixel: motion, press, release.
     private ResponseData HandleInputClick(HttpListenerRequest req)
     {
-        if (!TryReadJson(req, out var doc, out var err)) return err;
-
-        float x, y;
-        string button = "left";
-        using (doc)
-        {
-            var root = doc.RootElement;
-            if (!root.TryGetProperty("x", out var xe) || xe.ValueKind != JsonValueKind.Number)
-                return ResponseData.Error(400, "missing or non-numeric 'x'");
-            if (!root.TryGetProperty("y", out var ye) || ye.ValueKind != JsonValueKind.Number)
-                return ResponseData.Error(400, "missing or non-numeric 'y'");
-            x = xe.GetSingle();
-            y = ye.GetSingle();
-            if (root.TryGetProperty("button", out var be) && be.ValueKind == JsonValueKind.String)
-                button = be.GetString();
-        }
-
+        if (!TryReadFields(req, new[] { "x", "y", "button" }, out var f, out var err)) return err;
+        if (!TryRequireFloat(f, "x", out var x, out err) || !TryRequireFloat(f, "y", out var y, out err)) return err;
+        var button = f.GetValueOrDefault("button", "left");
         MouseButton index = button switch
         {
+            "left" => MouseButton.Left,
             "right" => MouseButton.Right,
             "middle" => MouseButton.Middle,
-            "left" => MouseButton.Left,
+            "wheel_up" => MouseButton.WheelUp,
+            "wheel_down" => MouseButton.WheelDown,
             _ => MouseButton.None,
         };
         if (index == MouseButton.None)
-            return ResponseData.Error(400, $"unknown button '{button}' (expected left|right|middle)");
-
-        var viewport = GetViewport();
-        if (viewport == null) return ResponseData.Error(500, "no viewport");
+            return ResponseData.Error(400, $"unknown button '{button}' (expected left|right|middle|wheel_up|wheel_down)");
+        if (GetViewport() == null) return ResponseData.Error(500, "no viewport");
 
         var pos = new Vector2(x, y);
-        // Coordinates are VIEWPORT pixels — the same space /screenshot captures.
-        // Events go through Viewport.PushInput with inLocalCoords: true rather than
-        // Input.ParseInputEvent: parsed OS events need a real window and a valid
-        // window->content stretch transform, neither of which exists headless, while
-        // local-coords PushInput enters the same GUI -> _unhandled_input pipeline
-        // directly in both modes and at any content scale factor. The leading motion
-        // event establishes GUI hover state, which BaseButton requires before a
-        // release emits `pressed` — real clicks are always preceded by motion. The
-        // warp keeps the OS cursor (and GetGlobalMousePosition readers) roughly in
-        // sync when windowed; it is a no-op headless.
         Input.WarpMouse(pos);
-        viewport.PushInput(new InputEventMouseMotion
-        {
-            Position = pos,
-            GlobalPosition = pos,
-        }, true);
-        viewport.PushInput(new InputEventMouseButton
-        {
-            ButtonIndex = index,
-            Pressed = true,
-            Position = pos,
-            GlobalPosition = pos,
-        }, true);
-        viewport.PushInput(new InputEventMouseButton
-        {
-            ButtonIndex = index,
-            Pressed = false,
-            Position = pos,
-            GlobalPosition = pos,
-        }, true);
-
+        PushMotion(pos);
+        PushButton(pos, index, true);
+        PushButton(pos, index, false);
         return ResponseData.Json(200, new Dictionary<string, object>
         {
             ["ok"] = true,
@@ -303,38 +325,89 @@ public partial class AgentRestServer : Node
         });
     }
 
+    // Pointer motion only (no button), so hover state — highlights at once, tooltips after
+    // their delay — builds exactly as for a real pointer.
+    private ResponseData HandleInputMove(HttpListenerRequest req)
+    {
+        if (!TryReadFields(req, new[] { "x", "y" }, out var f, out var err)) return err;
+        if (!TryRequireFloat(f, "x", out var x, out err) || !TryRequireFloat(f, "y", out var y, out err)) return err;
+        if (GetViewport() == null) return ResponseData.Error(500, "no viewport");
+        var pos = new Vector2(x, y);
+        Input.WarpMouse(pos);
+        PushMotion(pos);
+        return ResponseData.Json(200, new Dictionary<string, object> { ["ok"] = true, ["x"] = x, ["y"] = y });
+    }
+
+    // Press-drag-release from one canvas pixel to another, the end given as to_x/to_y or as
+    // an offset dx/dy from the start (so scenarios can drag from a captured rect without
+    // arithmetic): motion to the start, a press, `steps` motion events along the straight
+    // line carrying the held button in their mask and their relative travel, the release.
+    private ResponseData HandleInputDrag(HttpListenerRequest req)
+    {
+        var keys = new[] { "from_x", "from_y", "to_x", "to_y", "dx", "dy", "button", "steps" };
+        if (!TryReadFields(req, keys, out var f, out var err)) return err;
+        bool relative = f.ContainsKey("dx") || f.ContainsKey("dy");
+        if (relative && (f.ContainsKey("to_x") || f.ContainsKey("to_y")))
+            return ResponseData.Error(400, "give the end as 'to_x'+'to_y' or as 'dx'+'dy', not both");
+        var names = relative ? new[] { "from_x", "from_y", "dx", "dy" } : new[] { "from_x", "from_y", "to_x", "to_y" };
+        var p = new float[4];
+        for (int i = 0; i < names.Length; i++)
+        {
+            if (!TryRequireFloat(f, names[i], out p[i], out err)) return err;
+        }
+        if (relative)
+        {
+            p[2] += p[0];
+            p[3] += p[1];
+        }
+
+        var button = f.GetValueOrDefault("button", "left");
+        (MouseButton index, MouseButtonMask mask) = button switch
+        {
+            "left" => (MouseButton.Left, MouseButtonMask.Left),
+            "right" => (MouseButton.Right, MouseButtonMask.Right),
+            "middle" => (MouseButton.Middle, MouseButtonMask.Middle),
+            _ => (MouseButton.None, (MouseButtonMask)0),
+        };
+        if (index == MouseButton.None)
+            return ResponseData.Error(400, $"unknown button '{button}' (expected left|right|middle)");
+        var steps = ParseInt(f, "steps", out var stepsError) ?? 8;
+        if (stepsError != null) return ResponseData.Error(400, stepsError);
+        if (steps < 1 || steps > 100) return ResponseData.Error(400, "'steps' must be 1-100");
+        if (GetViewport() == null) return ResponseData.Error(500, "no viewport");
+
+        var from = new Vector2(p[0], p[1]);
+        var to = new Vector2(p[2], p[3]);
+        Input.WarpMouse(from);
+        PushMotion(from);
+        PushButton(from, index, true, mask);
+        var last = from;
+        for (int i = 1; i <= steps; i++)
+        {
+            var at = from.Lerp(to, (float)i / steps);
+            PushMotion(at, at - last, mask);
+            last = at;
+        }
+        Input.WarpMouse(to);
+        PushButton(to, index, false);
+        return ResponseData.Json(200, new Dictionary<string, object>
+        {
+            ["ok"] = true,
+            ["from_x"] = from.X,
+            ["from_y"] = from.Y,
+            ["to_x"] = to.X,
+            ["to_y"] = to.Y,
+            ["button"] = button,
+            ["steps"] = steps,
+        });
+    }
+
+    // `GET /quit?code=N`, or `{"code": N}` in a POST body (the query wins).
     private ResponseData HandleQuit(HttpListenerRequest req)
     {
-        int code = 0;
-        if (req.ContentLength64 > MaxBodyBytes)
-            return ResponseData.Error(413, "body too large");
-
-        var codeQuery = req.QueryString["code"];
-        if (!string.IsNullOrEmpty(codeQuery))
-        {
-            if (!int.TryParse(codeQuery, out code))
-                return ResponseData.Error(400, $"invalid 'code' query value '{codeQuery}'");
-        }
-        else if (req.ContentLength64 > 0)
-        {
-            string body;
-            using (var reader = new StreamReader(req.InputStream, req.ContentEncoding ?? Encoding.UTF8))
-                body = reader.ReadToEnd();
-
-            if (!string.IsNullOrWhiteSpace(body))
-            {
-                try
-                {
-                    using var doc = JsonDocument.Parse(body);
-                    if (doc.RootElement.TryGetProperty("code", out var c) && c.ValueKind == JsonValueKind.Number)
-                        code = c.GetInt32();
-                }
-                catch (JsonException ex)
-                {
-                    return ResponseData.Error(400, "invalid json: " + ex.Message);
-                }
-            }
-        }
+        if (!TryReadFields(req, new[] { "code" }, out var f, out var err)) return err;
+        var code = ParseInt(f, "code", out var codeError) ?? 0;
+        if (codeError != null) return ResponseData.Error(400, codeError);
 
         _quitExitCode = code;
         _quitCountdown = 5;
@@ -447,6 +520,8 @@ public partial class AgentRestServer : Node
             ["type"] = btn.GetType().Name,
             ["disabled"] = btn.Disabled,
             ["visible"] = btn.IsVisibleInTree(),
+            // GUI hover state, as /input/move (or a real pointer) builds it.
+            ["hovered"] = btn.IsHovered(),
             ["rect"] = new Dictionary<string, object>
             {
                 ["x"] = rect.Position.X,
@@ -508,117 +583,161 @@ public partial class AgentRestServer : Node
         }
     }
 
-    // ---- Typed domain interface — Example stub -----------------------------
+    // ---- Typed domain interfaces --------------------------------------------
     //
-    // Pattern for adding a typed domain surface (inventory, quest log, NPC dialogue,
-    // a level editor, etc.). To wire one up:
+    // The server stays domain-agnostic: a typed surface (inventory, quest log, level
+    // editor, display settings) is an IAgent<X> interface implemented by a node that joins
+    // a scene-tree group. Each one is declared once as a Domain<T> — its group, its 503
+    // text and its state snapshot — and its routes are one line each on the generic
+    // helpers below:
     //
-    //   1. Copy `IAgentExample.cs` to `IAgent<YourDomain>.cs` and rename `GetExampleState`.
-    //   2. Implement it on the active scene controller; that controller calls
-    //      `AddToGroup("agent_<your_domain>")` in `_Ready`.
-    //   3. Add a `FindYourDomain()` helper + route group below, mirroring `FindExample` /
-    //      `HandleExampleState`. Mutation routes should return `{ok, state, error?}`
-    //      where `state` is the full snapshot after the operation.
+    //   State(domain)                          GET  -> the snapshot, or 503 when absent
+    //   Route(req, domain, keys, (x, f) => ...) GET or POST -> find (503) -> read the
+    //                                          fields -> run the op -> {ok, state, error?}
     //
-    // The /example/state route stays in the template as a self-documenting stub; you can
-    // delete it once you've added real domain routes.
+    // Find<T>(group) and Envelope(state, result) are there for routes that need to step
+    // outside that shape. To add a surface: copy IAgentExample.cs, implement it on the
+    // owning node (AddToGroup in _Ready), declare its Domain<T> here, and register its
+    // routes in HandleRequest. /example/state is a self-documenting stub — delete it once
+    // a real domain exists.
 
-    private IAgentExample FindExample()
+    /// <summary>One typed surface: the group its implementer joins, the 503 text when none is up, and its snapshot.</summary>
+    private sealed record Domain<T>(string Group, string Missing, Func<T, object> Snapshot) where T : class;
+
+    private static readonly Domain<IAgentExample> Example = new(
+        "agent_example",
+        "no active example; expected a node in group 'agent_example' implementing IAgentExample",
+        e => e.GetExampleState());
+
+    // Backed by the DisplayScale AUTOLOAD, so unlike scene-controller-backed surfaces
+    // (/example) it is present for the whole process and never 503s in practice.
+    private static readonly Domain<IAgentDisplay> Display = new(
+        "agent_display",
+        "no display surface; expected the DisplayScale autoload in group 'agent_display' implementing IAgentDisplay",
+        d => d.GetDisplayState());
+
+    /// <summary>The live node in <paramref name="group"/> implementing <typeparamref name="T"/>, or null.</summary>
+    private T Find<T>(string group) where T : class
     {
         var tree = GetTree();
         if (tree == null) return null;
-        foreach (var node in tree.GetNodesInGroup(AgentExampleGroup))
+        foreach (var node in tree.GetNodesInGroup(group))
         {
-            if (node is IAgentExample e && IsInstanceValid(node)) return e;
+            if (node is T found && IsInstanceValid(node)) return found;
         }
         return null;
     }
 
-    private ResponseData HandleExampleState()
+    /// <summary>The mutation envelope: <c>{ok, state, error?}</c>, 200 on success and 400 otherwise.</summary>
+    private static ResponseData Envelope(object state, (bool ok, string error) result)
     {
-        var example = FindExample();
-        if (example == null)
-            return ResponseData.Error(503, $"no active example; expected a node in group '{AgentExampleGroup}' implementing IAgentExample");
-        return ResponseData.Json(200, example.GetExampleState());
-    }
-
-    // ---- Typed domain interface — Display (global UI scale) ----------------
-    //
-    // Unlike the scene-controller-backed /example pattern, this surface is backed by
-    // the DisplayScale AUTOLOAD, so it is always present for the whole process and
-    // never 503s in practice — the canonical example of an always-present typed surface.
-
-    private IAgentDisplay FindDisplay()
-    {
-        var tree = GetTree();
-        if (tree == null) return null;
-        foreach (var node in tree.GetNodesInGroup(AgentDisplayGroup))
+        var payload = new Dictionary<string, object>
         {
-            if (node is IAgentDisplay d && IsInstanceValid(node)) return d;
-        }
-        return null;
+            ["ok"] = result.ok,
+            ["state"] = state,
+        };
+        if (!result.ok) payload["error"] = result.error;
+        return ResponseData.Json(result.ok ? 200 : 400, payload);
     }
 
-    private const string NoDisplayError = "no display surface; expected the DisplayScale autoload in group 'agent_display' implementing IAgentDisplay";
-
-    private ResponseData HandleDisplayState()
+    /// <summary>A state route: the domain's snapshot, or 503 when no implementer is up.</summary>
+    private ResponseData State<T>(Domain<T> domain) where T : class
     {
-        var display = FindDisplay();
-        if (display == null) return ResponseData.Error(503, NoDisplayError);
-        return ResponseData.Json(200, display.GetDisplayState());
+        var target = Find<T>(domain.Group);
+        return target == null ? ResponseData.Error(503, domain.Missing) : ResponseData.Json(200, domain.Snapshot(target));
     }
 
+    /// <summary>
+    /// A mutation route: find the implementer (503 when absent), read <paramref name="keys"/>
+    /// through <see cref="TryReadFields"/> (query and body alike), run <paramref name="op"/>,
+    /// and wrap the post-operation snapshot in the envelope. An op that rejects a field
+    /// returns <c>(false, message)</c> like any other failure.
+    /// </summary>
+    private ResponseData Route<T>(HttpListenerRequest req, Domain<T> domain, string[] keys,
+        Func<T, Dictionary<string, string>, (bool ok, string error)> op) where T : class
+    {
+        var target = Find<T>(domain.Group);
+        if (target == null) return ResponseData.Error(503, domain.Missing);
+        if (!TryReadFields(req, keys, out var fields, out var err)) return err;
+        var result = op(target, fields);
+        return Envelope(domain.Snapshot(target), result);
+    }
+
+    // `GET ?factor=2.0` / `?auto=true`, or the same fields in a POST body.
     private ResponseData HandleDisplaySet(HttpListenerRequest req)
-    {
-        var display = FindDisplay();
-        if (display == null) return ResponseData.Error(503, NoDisplayError);
-        if (!TryReadJson(req, out var doc, out var err)) return err;
-
-        float? factor = null;
-        bool auto = false;
-        using (doc)
+        => Route(req, Display, new[] { "factor", "auto" }, (d, f) =>
         {
-            var root = doc.RootElement;
-            if (root.TryGetProperty("factor", out var fe) && fe.ValueKind == JsonValueKind.Number)
-                factor = fe.GetSingle();
-            if (root.TryGetProperty("auto", out var ae) &&
-                (ae.ValueKind == JsonValueKind.True || ae.ValueKind == JsonValueKind.False))
-                auto = ae.GetBoolean();
-        }
+            var factor = ParseFloat(f, "factor", out var error);
+            if (error != null) return (false, error);
+            var auto = ParseBool(f, "auto", out error);
+            if (error != null) return (false, error);
+            return d.SetScale(factor, auto == true);
+        });
 
-        var result = display.SetScale(factor, auto);
-        var payload = new Dictionary<string, object>
-        {
-            ["ok"] = result.ok,
-            ["state"] = display.GetDisplayState(),
-        };
-        if (!result.ok) payload["error"] = result.error;
-        return ResponseData.Json(result.ok ? 200 : 400, payload);
-    }
-
+    // `GET ?mode=windowed|fullscreen`, or the same field in a POST body.
     private ResponseData HandleDisplayWindow(HttpListenerRequest req)
-    {
-        var display = FindDisplay();
-        if (display == null) return ResponseData.Error(503, NoDisplayError);
-        if (!TryReadJson(req, out var doc, out var err)) return err;
+        => Route(req, Display, new[] { "mode" }, (d, f) => d.SetWindowMode(f.GetValueOrDefault("mode")));
 
-        string mode = null;
-        using (doc)
-        {
-            var root = doc.RootElement;
-            if (root.TryGetProperty("mode", out var me) && me.ValueKind == JsonValueKind.String)
-                mode = me.GetString();
-        }
+    // Backed by the DebugView AUTOLOAD (always present, like /display). In a release build the
+    // flag stays off and setting it is a 400 — though this server is debug-only anyway.
+    private static readonly Domain<IAgentDebug> Debug = new(
+        "agent_debug",
+        "no debug surface; expected the DebugView autoload in group 'agent_debug' implementing IAgentDebug",
+        d => d.GetDebugState());
 
-        var result = display.SetWindowMode(mode);
-        var payload = new Dictionary<string, object>
+    // `GET ?enabled=true|false`, or the same field in a POST body.
+    private ResponseData HandleDebugSet(HttpListenerRequest req)
+        => Route(req, Debug, new[] { "enabled" }, (d, f) =>
         {
-            ["ok"] = result.ok,
-            ["state"] = display.GetDisplayState(),
-        };
-        if (!result.ok) payload["error"] = result.error;
-        return ResponseData.Json(result.ok ? 200 : 400, payload);
-    }
+            var enabled = ParseBool(f, "enabled", out var error);
+            if (error != null) return (false, error);
+            if (enabled == null) return (false, "expected 'enabled' (true|false)");
+            return d.SetDebug(enabled.Value);
+        });
+
+    // Backed by a ZoomCamera in the current scene, so it 503s when none is up.
+    private static readonly Domain<IAgentCamera> Camera = new(
+        "agent_camera",
+        "no zoom camera; expected a node in group 'agent_camera' implementing IAgentCamera",
+        c => c.GetCameraState());
+
+    // `GET ?level=<zoom>&steps=<int>` (either or both), or the same fields in a POST body.
+    private ResponseData HandleCameraZoom(HttpListenerRequest req)
+        => Route(req, Camera, new[] { "level", "steps" }, (c, f) =>
+        {
+            var level = ParseFloat(f, "level", out var error);
+            if (error != null) return (false, error);
+            var steps = ParseInt(f, "steps", out error);
+            if (error != null) return (false, error);
+            return c.SetZoom(level, steps);
+        });
+
+    // Backed by the Transition AUTOLOAD (always present, like /display).
+    private static readonly Domain<IAgentTransition> TransitionSurface = new(
+        "agent_transition",
+        "no transition overlay; expected the Transition autoload in group 'agent_transition' implementing IAgentTransition",
+        t => t.GetTransitionState());
+
+    // `GET ?text=<loading text>&seconds=<0-60>` (either or neither), or the same fields in a POST body.
+    private ResponseData HandleTransitionDemo(HttpListenerRequest req)
+        => Route(req, TransitionSurface, new[] { "text", "seconds" }, (t, f) =>
+        {
+            var seconds = ParseFloat(f, "seconds", out var error);
+            if (error != null) return (false, error);
+            return t.Demo(f.GetValueOrDefault("text"), seconds);
+        });
+
+    // Backed by the GameSession AUTOLOAD (always present); read-only — the scenes write the carrier.
+    private static readonly Domain<IAgentSession> Session = new(
+        "agent_session",
+        "no session carrier; expected the GameSession autoload in group 'agent_session' implementing IAgentSession",
+        s => s.GetSessionState());
+
+    // Scene-backed by EITHER demo scene (the layered snapshot): 503 elsewhere.
+    private static readonly Domain<IAgentDemo> Demo = new(
+        "agent_demo",
+        "no scene-handoff demo scene; expected scenes/main.tscn or scenes/demo/destination.tscn (group 'agent_demo', IAgentDemo)",
+        d => d.GetDemoState());
 
     // -------------------------------------------------------------------------
 
@@ -683,6 +802,98 @@ public partial class AgentRestServer : Node
             errorResponse = ResponseData.Error(400, "invalid json: " + ex.Message);
             return false;
         }
+    }
+
+    // ---- Request fields (the GET-or-POST idiom) -------------------------------
+
+    /// <summary>
+    /// Merges a JSON POST body and the query string into one string map (the query wins),
+    /// so a route reads its fields the same way whichever form the caller used — the
+    /// helper behind "bodyless mutations accept GET". Only <paramref name="keys"/> are
+    /// read; JSON strings come through as-is, booleans as <c>true</c>/<c>false</c>, and
+    /// anything else as its raw JSON text. Parse the values with
+    /// <see cref="ParseBool"/> / <see cref="ParseInt"/> / <see cref="ParseFloat"/>.
+    /// </summary>
+    private static bool TryReadFields(HttpListenerRequest req, string[] keys, out Dictionary<string, string> fields, out ResponseData err)
+    {
+        fields = new Dictionary<string, string>();
+        err = default;
+        if (req.HttpMethod == "POST" && req.ContentLength64 != 0)
+        {
+            if (!TryReadJson(req, out var doc, out err)) return false;
+            using (doc)
+            {
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var k in keys)
+                    {
+                        if (!doc.RootElement.TryGetProperty(k, out var el) || el.ValueKind == JsonValueKind.Null) continue;
+                        fields[k] = el.ValueKind switch
+                        {
+                            JsonValueKind.String => el.GetString(),
+                            JsonValueKind.True => "true",
+                            JsonValueKind.False => "false",
+                            _ => el.GetRawText(),
+                        };
+                    }
+                }
+            }
+        }
+        foreach (var k in keys)
+        {
+            var v = req.QueryString[k];
+            if (!string.IsNullOrEmpty(v)) fields[k] = v;
+        }
+        return true;
+    }
+
+    /// <summary>An optional boolean field: null when absent, an error when it isn't true|false.</summary>
+    private static bool? ParseBool(Dictionary<string, string> f, string key, out string error)
+    {
+        error = null;
+        if (!f.TryGetValue(key, out var v)) return null;
+        if (bool.TryParse(v, out var b)) return b;
+        error = $"invalid '{key}' value '{v}' (expected true|false)";
+        return null;
+    }
+
+    /// <summary>An optional integer field: null when absent, an error when it doesn't parse.</summary>
+    private static int? ParseInt(Dictionary<string, string> f, string key, out string error)
+    {
+        error = null;
+        if (!f.TryGetValue(key, out var v)) return null;
+        if (int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)) return n;
+        error = $"invalid '{key}' value '{v}' (expected an integer)";
+        return null;
+    }
+
+    /// <summary>An optional number field: null when absent, an error when it doesn't parse.</summary>
+    private static float? ParseFloat(Dictionary<string, string> f, string key, out string error)
+    {
+        error = null;
+        if (!f.TryGetValue(key, out var v)) return null;
+        if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && float.IsFinite(n)) return n;
+        error = $"invalid '{key}' value '{v}' (expected a number)";
+        return null;
+    }
+
+    /// <summary>A required number field; false with a 400 when it is missing or doesn't parse.</summary>
+    private static bool TryRequireFloat(Dictionary<string, string> f, string key, out float value, out ResponseData err)
+    {
+        value = 0f;
+        var parsed = ParseFloat(f, key, out var error);
+        if (error == null && parsed == null) error = $"missing '{key}'";
+        if (error != null) return Fail(out err, error);
+        value = parsed.Value;
+        err = default;
+        return true;
+    }
+
+    /// <summary>A plain <c>{error}</c> 400, for the bool-returning parse helpers.</summary>
+    private static bool Fail(out ResponseData err, string message)
+    {
+        err = ResponseData.Error(400, message);
+        return false;
     }
 
     private sealed class PendingRequest

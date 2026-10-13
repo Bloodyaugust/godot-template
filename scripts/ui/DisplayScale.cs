@@ -23,7 +23,9 @@ namespace godottemplate.UI;
 ///
 /// On startup it derives an automatic factor from the monitor (<see cref="DisplayServer.ScreenGetScale"/>,
 /// falling back to <see cref="DisplayServer.ScreenGetDpi"/> / 96), snapped to quarter steps
-/// and clamped to a sane range. The player may set an explicit override; clearing it returns
+/// and clamped to a sane range, then capped so the window still holds the
+/// <see cref="MinCanvas"/> floor of UI pixels (design: <c>design/visual/ui-scale.md</c>). The
+/// cap follows the live window, so auto re-derives whenever the window resizes. The player may set an explicit override; clearing it returns
 /// to auto. Beside the scale it owns the window-mode setting (windowed vs. borderless
 /// fullscreen). Both settings persist through <see cref="PlayerProfile"/> and are
 /// re-applied here at boot; the reported state is the <em>setting</em>, not the live OS
@@ -55,10 +57,16 @@ public partial class DisplayScale : Node, IAgentDisplay
     /// </summary>
     public const float MaxAutoFactor = 2.0f;
 
+    /// <summary>
+    /// The smallest canvas (UI pixels, after scaling) every screen is laid out for. The auto
+    /// factor never scales the window below it; an explicit override may, at the player's choice.
+    /// </summary>
+    public static readonly Vector2I MinCanvas = new(1280, 720);
+
     /// <summary>Explicit player override, or null to follow <see cref="AutoFactor"/>.</summary>
     private float? _override;
 
-    /// <summary>The monitor-derived factor computed at startup.</summary>
+    /// <summary>The monitor-derived factor, capped by the window's size; re-derived on resize.</summary>
     public float AutoFactor { get; private set; } = 1.0f;
 
     /// <summary>The factor currently applied to the window (override if set, else auto).</summary>
@@ -75,6 +83,7 @@ public partial class DisplayScale : Node, IAgentDisplay
         Instance = this;
         AddToGroup(AgentGroup);
         AutoFactor = ComputeAutoFactor();
+        GetWindow().SizeChanged += OnWindowResized;
         if (PlayerProfile.ScaleOverride is { } persisted)
             _override = Snap(persisted);
         Fullscreen = PlayerProfile.Fullscreen;
@@ -97,7 +106,27 @@ public partial class DisplayScale : Node, IAgentDisplay
             if (dpi > 0) scale = dpi / BaselineDpi;
         }
         // Snap/clamp to the supported range, then hold auto-detect to its lower ceiling.
-        return Mathf.Min(Snap(scale), MaxAutoFactor);
+        return Mathf.Min(Mathf.Min(Snap(scale), MaxAutoFactor), PixelCap(GetWindow()?.Size ?? Vector2I.Zero));
+    }
+
+    private void OnWindowResized()
+    {
+        float auto = ComputeAutoFactor();
+        if (Mathf.IsEqualApprox(auto, AutoFactor)) return;
+        AutoFactor = auto;
+        if (!HasOverride) Apply();
+    }
+
+    /// <summary>
+    /// The largest quarter-step factor that leaves a <paramref name="window"/> of that many
+    /// physical pixels at least <see cref="MinCanvas"/> UI pixels, never below
+    /// <see cref="MinFactor"/>; no cap for an unknown size.
+    /// </summary>
+    public static float PixelCap(Vector2I window)
+    {
+        if (window.X <= 0 || window.Y <= 0) return MaxFactor;
+        float fit = Mathf.Min((float)window.X / MinCanvas.X, (float)window.Y / MinCanvas.Y);
+        return Mathf.Max(MinFactor, Mathf.Floor(fit * 4f) / 4f);
     }
 
     /// <summary>Snap to quarter steps and clamp into the supported range.</summary>
@@ -166,6 +195,9 @@ public partial class DisplayScale : Node, IAgentDisplay
             ["min_factor"] = MinFactor,
             ["max_factor"] = MaxFactor,
             ["max_auto_factor"] = MaxAutoFactor,
+            ["window_size"] = new Dictionary<string, object> { ["width"] = window?.Size.X ?? 0, ["height"] = window?.Size.Y ?? 0 },
+            ["pixel_cap"] = PixelCap(window?.Size ?? Vector2I.Zero),
+            ["min_canvas"] = new Dictionary<string, object> { ["width"] = MinCanvas.X, ["height"] = MinCanvas.Y },
         };
     }
 

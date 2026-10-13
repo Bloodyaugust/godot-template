@@ -29,6 +29,11 @@ if [ "${#files[@]}" -eq 0 ]; then files=("$here"/*.hurl); fi
 # must never touch the developer's real user://profile.json (display-settings
 # mutations included — display_input.hurl).
 export GODOT_PROFILE_MEMORY=1
+# The instances we boot listen on the port the scenarios are aimed at, so PORT can run
+# beside a game already holding the default one.
+export GODOT_AGENT_REST_PREFIX="http://$hostport/"
+# Per-tool env overrides go here too: a dev tool that writes files (a save path, an
+# export dir) gets an env var pointing it under tmp/hurl/, never over tracked content.
 
 failed=0
 for f in "${files[@]}"; do
@@ -49,9 +54,12 @@ for f in "${files[@]}"; do
     hurl --test --jobs 1 --variable host="$hostport" --error-format long "$f" || failed=$((failed + 1))
     # The file quits itself on success; force teardown on any failure path.
     curl -fsS "http://$hostport/quit" >/dev/null 2>&1 || true
-    sleep 0.8
-    # Only ever kill the specific PID we launched — never godot-mono by name.
-    if curl -fsS "http://$hostport/status" >/dev/null 2>&1; then kill "$pid" 2>/dev/null || true; fi
+    # Wait for the instance we launched to exit (up to ~10 s), so the next file's
+    # status wait can't reach this one while it shuts down. Only ever kill the
+    # specific PID we launched — never godot-mono by name.
+    for _ in $(seq 50); do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
+    if kill -0 "$pid" 2>/dev/null; then kill "$pid" 2>/dev/null || true; fi
+    wait "$pid" 2>/dev/null || true
 done
 
 if [ "$failed" -gt 0 ]; then echo -e "\nFAILED: $failed file(s)"; exit 1; fi

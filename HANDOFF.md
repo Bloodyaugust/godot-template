@@ -35,9 +35,18 @@ Ask the agent to **rewrite `HANDOFF.md` for the next phase**. A good regeneratio
 
 - Keeps this top "What this file is" section intact.
 - Replaces "What we did this session" with a concise summary of the session that's
-  ending (what shipped, what was tested, what's deferred).
+  ending: a lead line naming the objective, then three bullets —
+  - **Shipped**: what landed, by file or directory, pointing at the design docs'
+    *Settled while building* notes for what the build decided.
+  - **Tested**: the unit and Hurl suites' state on the final build, the new scenarios,
+    and what the human played and signed off (bugs they found and how they were fixed).
+  - **Still only eyeballed, not judged**: the feel, visual and balance questions nobody
+    has decided yet.
 - Replaces "Next session" with the agreed next objective, scoped tightly, with
-  in/out-of-scope boundaries and a concrete done-criteria checklist.
+  in/out-of-scope boundaries and a concrete done-criteria checklist. When no objective
+  is agreed, say so in one line and point at the candidates instead of inventing one:
+  "No objective is set. <What decides it>; `design/game/<system>.md`, *Deferred*, lists
+  the candidates."
 - References exact file paths and the relevant docs.
 
 ### What must NOT accumulate here

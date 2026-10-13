@@ -12,6 +12,8 @@ namespace godottemplate.UI;
 public static class GameScenes
 {
     public const string MainMenu = "res://scenes/main.tscn";
+    /// <summary>The scene-handoff demo's destination (<c>scripts/demo/</c>); delete with the demo.</summary>
+    public const string Destination = "res://scenes/demo/destination.tscn";
     // public const string Game = "res://scenes/game/game.tscn";
     // public const string Settings = "res://scenes/ui/settings.tscn";
 }

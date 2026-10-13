@@ -6,8 +6,8 @@ namespace godottemplate.Util;
 /// An inclusive integer <c>[min, max]</c> range that rolls a uniform value. Authored
 /// content (JSON definitions under <c>resources/definitions/</c>) can carry ranges
 /// instead of concrete values, rolled once per realization so every generated instance
-/// is fresh. Parsed from a JSON <c>[min, max]</c> array (or a single number) by
-/// <c>DefReader</c>.
+/// is fresh. A registry builds one from a JSON <c>[min, max]</c> array (e.g.
+/// <c>JsonDefReader.ReqIntPair</c>).
 /// </summary>
 public readonly record struct IntRange(int Min, int Max)
 {

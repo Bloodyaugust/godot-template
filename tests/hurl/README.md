@@ -35,12 +35,18 @@ tests/hurl/run-tests.sh                  # bash equivalent
 WINDOWED=1 tests/hurl/run-tests.sh
 ```
 
+`-Port 8081` (`PORT=8081` for bash) boots each instance with its REST server on that port
+(`GODOT_AGENT_REST_PREFIX`) and aims the scenarios there, so a run can go beside a game already
+holding 8080, such as one the developer is playing (or another agent's run).
+
 Both runners pin `GODOT_PROFILE_MEMORY=1` on every instance they boot: the whole
 **player profile** (`scripts/session/PlayerProfile.cs`) goes memory-only, so test
 runs never touch the developer's real `user://profile.json` — display-settings
 mutations included (`display_input.hurl`). A file run **by hand** against a
 manually-booted game doesn't get the pin — boot with the env var set if profile
-writes would interfere.
+writes would interfere. A dev tool that writes files gets the same treatment: the runners
+are where its env override goes, pointing the writes under `tmp/hurl/` so a scenario's
+saves never overwrite tracked content.
 
 Or run one file by hand against an **already-booted** game (handy while iterating):
 
@@ -52,6 +58,13 @@ hurl --test --jobs 1 --variable host=127.0.0.1:8080 --error-format long tests/hu
 `--jobs 1` is required: there is a single game instance on one port, so files must
 not run in parallel against it. `--error-format long` prints the full response body
 on a failed assert — the state snapshot that tells you *why* it failed.
+
+**Measure tick rate headless.** A windowed instance whose window is hidden or unfocused
+(seen on Wayland) stalls its frames, and anything ticked from `_Process`/`_PhysicsProcess`
+with them, to a few ticks a second; compare a tick counter against wall-clock on a headless
+instance instead. And after a `/quit`, wait until `/status` stops answering before booting the
+next instance: a new one that boots while the old still holds the port runs without a REST
+server (the runners wait on the launched PID for exactly this reason).
 
 ## The idiom
 
@@ -68,7 +81,11 @@ on a failed assert — the state snapshot that tells you *why* it failed.
    is a latent flake. For clicking buttons, `/ui/controls` reports each control's
    on-screen `rect` with a ready-made `center_x`/`center_y` (Hurl captures can't do
    arithmetic) — capture those instead of pinning layout coordinates
-   (`display_input.hurl`).
+   (`display_input.hurl`). **A fractional float capture is unsafe in a URL**: Hurl 8
+   renders `-583.99609375` into a query string as `-583.99609375.0`, which no route
+   parses, while whole numbers render cleanly, so a scenario that worked on one boot
+   fails on another. End such captures with ` toInt` when a whole unit will do, or
+   send the value in a JSON body instead.
 
 ## Authoring rules (learned the hard way)
 
@@ -113,9 +130,9 @@ rather than rendered display text, which is presentation and may change or colli
 
 **Teardown.** Every file ends by quitting the game (`GET /quit`, or pressing a quit
 button through the surface under test) so a successful run leaves nothing behind. The
-runner additionally force-quits (and, only as a last resort, kills the **specific PID
-it launched** — never `godot-mono` by name) so a failed run can't leave an instance
-holding port 8080.
+runner additionally force-quits, waits up to ~10 s for the instance it launched to exit
+(and, only as a last resort, kills the **specific PID it launched** — never `godot-mono`
+by name) so a failed run can't leave an instance holding the port.
 
 ## Adding a test
 

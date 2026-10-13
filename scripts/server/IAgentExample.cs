@@ -23,11 +23,13 @@ namespace godottemplate.Server;
 //      it (and ideally also `RemoveFromGroup` on free, though Godot handles
 //      group cleanup automatically when nodes are freed).
 //
-//   3. In `AgentRestServer.cs`, add a route group following `FindExample` /
-//      `HandleExampleState`: a `Find<YourDomain>()` helper that scans the
-//      group, and one `Handle<Action>` per route. State routes (`GET`) just
-//      return the snapshot; mutation routes (`POST`) call into the interface
-//      and return `{ok, state, error?}`.
+//   3. In `AgentRestServer.cs`, declare a `Domain<IAgent<YourDomain>>` beside
+//      `Example` / `Display` (its group, its 503 text, its snapshot), then
+//      register one line per route in `HandleRequest` on the generic helpers:
+//      `State(domain)` for the `GET` snapshot, and
+//      `Route(req, domain, keys, (x, fields) => ...)` for mutations (GET or
+//      POST: it finds the implementer, 503s when absent, reads the fields
+//      through `TryReadFields`, runs the op and returns `{ok, state, error?}`).
 //
 // You can delete this file (and the `/example/state` route) once you have at
 // least one real domain interface — it's only here as a self-documenting

@@ -28,3 +28,10 @@ page, so the per-directory-README convention stops here.)
   `deps.json`) into later pcks — which is why `.gitignore` whitelists that one
   file. A manual `workflow_dispatch` run is the dry-run path: build + smoke
   check + workflow artifacts, no publish.
+
+- `unit-tests.yml` — the engine-free xUnit rig (`tests/unit/`) on every push and
+  pull request, on `ubuntu-latest` and `windows-latest`. Two platforms because the
+  matrix catches platform-dependent behavior in the engine-free layer
+  (`scripts/core/`) before it ships — the place a determinism or portability
+  regression would first show. No Godot download; the rig compiles
+  `scripts/core/` directly.
