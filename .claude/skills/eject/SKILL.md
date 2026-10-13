@@ -343,14 +343,24 @@ mutation, after every other change has been written to disk.
    diff and decide.
 2. `dotnet test tests/unit/<CHOSEN_NAMESPACE>.Tests.csproj` — must stay
    green (same stop rule).
-3. Run the remaining Hurl files through the wrapper — `tests/hurl/run-tests.ps1`
+3. **Ask the user to open the project in the Godot editor once, and wait.**
+   A freshly cloned checkout has no `.godot/` import cache, and the editor is
+   what builds it (and the renamed C# assembly) on first open; until that has
+   happened, any `godot-mono --path .` boot — the Hurl wrapper's included —
+   errors out instead of starting the game, so the scenarios fail for a
+   reason that has nothing to do with the eject. Tell the user: open the
+   ejected project in the Godot editor, let the import finish, press the
+   Build (hammer) button, then confirm here. Do not continue until they
+   confirm; then check that `.godot/` now exists before booting anything.
+4. Run the remaining Hurl files through the wrapper — `tests/hurl/run-tests.ps1`
    (or `run-tests.sh`) with no file list runs them all, each in a fresh
    headless instance, and guarantees teardown; `smoke.hurl` drives `/status`
    → `/ui/controls` → `/ui/press main.quit`. A keeper that fails is a stub
    bug to report, not to patch around. If `hurl` isn't installed, fall back
    to booting with `godot-mono --path . --headless` and hand-driving the
    smoke's three calls with
-   `curl` (`GET /quit` as the fallback teardown). Per the project's CLAUDE.md
+   `curl` (`GET /quit` as the fallback teardown); the editor-first rule in
+   step 3 applies to that boot too. Per the project's CLAUDE.md
    cleanup rule, never leave a game instance you launched running after the
    skill exits — including on error paths — and never kill `godot-mono` by
    name.
