@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using godottemplate.Core.Snapshots;
 using godottemplate.Server;
 
 namespace godottemplate.Session;
@@ -79,23 +80,18 @@ public partial class GameSession : Node, IAgentSession
 
     /// <summary>
     /// The carrier for agent states: the launch, the result and the next seed. <b>Seeds are
-    /// strings</b>: a 64-bit seed doesn't survive a JSON number (clients parse doubles, exact only
-    /// to 2^53), so it is serialised as its decimal text, and a route taking one parses a string.
+    /// strings</b> (<see cref="Snapshot.Wide(ulong)"/>): a 64-bit seed doesn't survive a JSON number
+    /// (clients parse doubles, exact only to 2^53), so it is serialised as its decimal text, and a
+    /// route taking one parses a string.
     /// </summary>
-    public static Dictionary<string, object> GetState() => new()
-    {
-        ["launch"] = Launch == null ? null : new Dictionary<string, object>
-        {
-            ["destination"] = Launch.Destination,
-            ["seed"] = Launch.Seed.ToString(),
-        },
-        ["result"] = Result == null ? null : new Dictionary<string, object>
-        {
-            ["kind"] = Result.Kind,
-            ["seed"] = Result.Seed.ToString(),
-        },
-        ["next_seed"] = NextSeed?.ToString(),
-    };
+    public static Dictionary<string, object> GetState() => Snapshot.Of(
+        ("launch", Launch == null ? null : Snapshot.Of(
+            ("destination", Launch.Destination),
+            ("seed", Snapshot.Wide(Launch.Seed)))),
+        ("result", Result == null ? null : Snapshot.Of(
+            ("kind", Result.Kind),
+            ("seed", Snapshot.Wide(Result.Seed)))),
+        ("next_seed", Snapshot.Wide(NextSeed)));
 
     public Dictionary<string, object> GetSessionState() => GetState();
 }

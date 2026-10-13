@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://crugjb6ckvs0s"]
+[gd_scene load_steps=9 format=3 uid="uid://crugjb6ckvs0s"]
 
 [ext_resource type="Script" path="res://scripts/ui/MainScreen.cs" id="1_main"]
 [ext_resource type="Script" path="res://scripts/test/Player.cs" id="2_player"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://scripts/camera/ZoomCamera.cs" id="4_camera"]
 [ext_resource type="PackedScene" path="res://scenes/ui/top_bar.tscn" id="5_topbar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu_overlay.tscn" id="6_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/confirm_dialog.tscn" id="9_dialog"]
+[ext_resource type="PackedScene" path="res://scenes/ui/floating_label.tscn" id="10_float"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -15,6 +17,7 @@ unique_name_in_owner = true
 position = Vector2(576, 324)
 texture = ExtResource("3_icon")
 script = ExtResource("2_player")
+PingLabel = ExtResource("10_float")
 
 [node name="Camera" type="Camera2D" parent="Player"]
 unique_name_in_owner = true
@@ -71,5 +74,9 @@ MenuAgentId = "main.menu"
 unique_name_in_owner = true
 layout_mode = 1
 AgentIdPrefix = "main.menu"
+
+[node name="QuitDialog" parent="Chrome/Root" instance=ExtResource("9_dialog")]
+unique_name_in_owner = true
+layout_mode = 1
 
 [connection signal="pressed" from="UI/QuitButton" to="Player" method="OnQuitPressed"]

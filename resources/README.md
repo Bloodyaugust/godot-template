@@ -5,7 +5,8 @@ Godot `.tres` resource files defining game content. These are loaded by code or 
 Group resources into subdirectories by type (e.g. `enemies/`, `items/`, `levels/`).
 
 `definitions/` is the exception: it holds **plain-JSON** content files loaded at
-runtime by `scripts/content/`, not `.tres` resources — see `definitions/README.md`.
+runtime by `scripts/content/` (the `ContentBootstrap` autoload, at boot), not `.tres`
+resources — see `definitions/README.md`.
 
 ## C# Custom Resource .tres Format
 

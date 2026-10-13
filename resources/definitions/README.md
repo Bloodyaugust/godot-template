@@ -4,7 +4,12 @@ Authored game content as **plain JSON** — distinct from the `.tres` resources 
 rest of `resources/`. These are the definition files loaded at runtime by
 `scripts/content/` (the loader), parsed into the immutable definition objects your
 registries serve by id. The directory starts empty; add one file per definition type
-(`structures.json`, `enemies.json`, …) as the game grows content.
+(`structures.json`, `enemies.json`, …) as the game grows content; the
+`ContentBootstrap` autoload (`scripts/content/`) loads every file at boot.
+
+| File | Holds |
+|------|-------|
+| `examples.json` | **Placeholder — delete it** with its parser (`scripts/core/content/ExampleDef.cs`), tests and `ContentBootstrap` line once a real definition file lands. Three `ExampleDef` records (id, name, an int `cost`, a snake_case `kind`) so the pipeline runs at boot and `/content/state` has something to report. |
 
 ## Conventions
 
@@ -29,14 +34,15 @@ registries serve by id. The directory starts empty; add one file per definition 
 ## Export inclusion
 
 These are non-resource files (`*.json`), so they are **not** pulled into an exported
-build automatically. Every preset in `export_presets.cfg` needs
+build automatically. Every preset in `export_presets.cfg` carries
 
 ```
 include_filter="resources/definitions/*.json"
 ```
 
 in its `[preset.N]` section (Export dialog → *Resources* tab → "Filters to export
-non-resource files/folders"). The template's presets ship with `include_filter=""`
-because the directory starts empty — set it on each preset when the first definition
-file lands, or the loader will fail at startup in the exported build while working
-fine in the editor.
+non-resource files/folders"). Keep it on any preset you add (merge, comma-separated,
+with any other filter it needs), or the loader fails at startup in the exported build
+while working fine in the editor. The release workflow's smoke check boots the export
+but only checks the exit code, so a missing file there shows as a `[Content]` error in
+its log, not a failed job.

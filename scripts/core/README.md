@@ -28,6 +28,10 @@ the scene tree in the regular `scripts/` subdirectories.
   in-memory backend `MemoryRecordFiles`, and `RecordFolder<T>` (id = file name,
   bad files skipped with a warning). `ExampleRecord` + `ExampleRecordCodec` are
   the deletable reference pair. Tests: `tests/unit/Persistence/`.
+- `snapshots/` — `Snapshot`, the builders every agent-state snapshot (`GetXState()`) is
+  made with: `Snapshot.Of((key, value), ...)` refuses a non-snake_case or duplicate key,
+  a raw 64-bit integer (`Snapshot.Wide`, a string) or an enum (`Snapshot.Name`); the
+  convention: `CLAUDE.md`, *Typed domain interfaces*. Tests: `tests/unit/Snapshots/`.
 - `validation/` — `BuildResult<T>` / `BuildIssue`: a build that returns the
   frozen value or *every* issue found, each with a stable string code and a
   location path. Tests: `tests/unit/Validation/`.

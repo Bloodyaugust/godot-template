@@ -36,6 +36,18 @@ jsonpath "$.ok" == false
 jsonpath "$.error" contains "factor"
 jsonpath "$.state.applied" == 1.0
 
+# /input/action reads the same fields from a POST body or the query: both 400 alike.
+POST http://{{host}}/input/action
+{"action": "no_such_action", "mode": "tap"}
+HTTP 400
+[Asserts]
+jsonpath "$.error" contains "unknown action"
+
+GET http://{{host}}/input/action?mode=tap
+HTTP 400
+[Asserts]
+jsonpath "$.error" contains "'action'"
+
 # ── 2. The QuitButton's rect sits inside the window; nothing hovers it yet ───
 GET http://{{host}}/ui/controls
 HTTP 200

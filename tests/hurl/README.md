@@ -35,6 +35,9 @@ tests/hurl/run-tests.sh                  # bash equivalent
 WINDOWED=1 tests/hurl/run-tests.sh
 ```
 
+A headless boot runs the dummy renderer, so `/screenshot` answers `503` there (no image
+to read); a scenario that needs real pixels must run windowed (`WINDOWED=1` / `-Windowed`).
+
 `-Port 8081` (`PORT=8081` for bash) boots each instance with its REST server on that port
 (`GODOT_AGENT_REST_PREFIX`) and aims the scenarios there, so a run can go beside a game already
 holding 8080, such as one the developer is playing (or another agent's run).

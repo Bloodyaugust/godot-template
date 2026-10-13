@@ -30,7 +30,25 @@ HTTP 200
 jsonpath "$" count == 1
 jsonpath "$[0].position.x" exists
 
-# ── 3. Teardown: quit through the button under test (ends the instance) ───────
+# ── 3. /ui/press validates its id (GET alias, query field) ────────────────────
+GET http://{{host}}/ui/press?id=
+HTTP 400
+[Asserts]
+jsonpath "$.error" contains "'id'"
+
+GET http://{{host}}/ui/press?id=main.no_such_button
+HTTP 404
+
+# ── 4. /screenshot: a PNG windowed; headless (the runners' default) has no image
+#      to read — the dummy renderer draws nothing — and says so with a 503 ───────
+GET http://{{host}}/screenshot
+HTTP *
+[Asserts]
+status toString matches "^(200|503)$"
+header "Content-Type" matches "^(image/png|application/json)"
+bytes count > 40
+
+# ── 5. Teardown: quit through the button under test (ends the instance) ───────
 POST http://{{host}}/ui/press
 { "id": "main.quit" }
 HTTP 200

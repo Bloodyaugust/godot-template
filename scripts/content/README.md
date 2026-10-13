@@ -19,6 +19,7 @@ from disk.
 | File | Role |
 |------|------|
 | `ContentLoader.cs` | Reads a definitions file (`res://resources/definitions/<name>.json`) via `FileAccess`: `ReadText` returns the raw text (for an injected-reader `Parse`), `LoadArray<T>(file, each)` hands it to `JsonDefReader.ParseArray` and maps each element. A missing file or any engine-free `ContentError` surfaces as a logged `ContentException`. |
+| `ContentBootstrap.cs` | The **autoload** that loads every definitions file at boot (`_EnterTree`): reads each through `ContentLoader.ReadText`, parses it engine-free, and latches the first failure into `Error` (logged once by `ContentException`) so the game still boots and the failure is readable. Joins `agent_content` and implements `IAgentContent` (`/content/state`: `loaded`, `error`, `files`, the placeholder `examples`). Add one line per definitions file to `LoadAll`. |
 | `ContentException.cs` | The Godot-side content-error type. Constructing one also emits `GD.PushError` so the failure shows as one clean console line before it propagates — content errors are hard, loud failures, never a silent empty world. `From(ContentError)` bridges an engine-free error. |
 
 The reader itself (`scripts/core/content/JsonDefReader.cs`): typed required/optional
@@ -58,7 +59,7 @@ registries on top. The shape that has worked well (proven in spun-out projects):
    `ContentException.From`. Checks that need Godot (a `sprite` path resolves to a
    texture) stay here.
 7. **Validate cross-file references once at startup**: a single
-   `ValidateReferences()` pass (called from an autoload's `_EnterTree`) checks that
+   `ValidateReferences()` pass (called from `ContentBootstrap.LoadAll`) checks that
    every cross-registry id resolves, throwing a `ContentException` on a dangling
    reference. A bad file then fails at boot with a clear
    `[Content] <file> (<entry>): <reason>` message rather than booting an empty world.

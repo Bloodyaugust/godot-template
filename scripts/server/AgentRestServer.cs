@@ -159,14 +159,12 @@ public partial class AgentRestServer : Node
         var method = ctx.Request.HttpMethod;
 
         if (method == "GET" && path == "/status") return HandleStatus();
-        if (method == "POST" && path == "/input/action") return HandleInputAction(ctx.Request);
         if (method == "POST" && path == "/input/click") return HandleInputClick(ctx.Request);
         if (method == "POST" && path == "/input/move") return HandleInputMove(ctx.Request);
         if (method == "POST" && path == "/input/drag") return HandleInputDrag(ctx.Request);
         if (method == "GET" && path == "/nodes") return HandleNodes(ctx.Request);
         if (method == "GET" && path == "/screenshot") return HandleScreenshot(ctx.Request);
         if (method == "GET" && path == "/ui/controls") return HandleUiControls();
-        if (method == "POST" && path == "/ui/press") return HandleUiPress(ctx.Request);
         if (method == "GET" && path == "/example/state") return State(Example);
         if (method == "GET" && path == "/display/state") return State(Display);
         if (method == "GET" && path == "/debug/state") return State(Debug);
@@ -174,13 +172,19 @@ public partial class AgentRestServer : Node
         if (method == "GET" && path == "/transition/state") return State(TransitionSurface);
         if (method == "GET" && path == "/session/state") return State(Session);
         if (method == "GET" && path == "/demo/state") return State(Demo);
+        if (method == "GET" && path == "/devlab/state") return State(DevLab);
+        if (method == "GET" && path == "/content/state") return State(ContentSurface);
         bool getOrPost = method == "POST" || method == "GET";
+        if (getOrPost && path == "/input/action") return HandleInputAction(ctx.Request);
+        if (getOrPost && path == "/ui/press") return HandleUiPress(ctx.Request);
         if (getOrPost && path == "/display/set") return HandleDisplaySet(ctx.Request);
         if (getOrPost && path == "/display/window") return HandleDisplayWindow(ctx.Request);
         if (getOrPost && path == "/debug/set") return HandleDebugSet(ctx.Request);
         if (getOrPost && path == "/camera/zoom") return HandleCameraZoom(ctx.Request);
         if (getOrPost && path == "/transition/skip") return Route(ctx.Request, TransitionSurface, Array.Empty<string>(), (t, _) => t.SkipHold());
         if (getOrPost && path == "/transition/demo") return HandleTransitionDemo(ctx.Request);
+        if (getOrPost && path == "/devlab/reroll") return Route(ctx.Request, DevLab, Array.Empty<string>(), (l, _) => l.Reroll());
+        if (getOrPost && path == "/devlab/seed") return HandleDevLabSeed(ctx.Request);
         if (getOrPost && path == "/quit") return HandleQuit(ctx.Request);
 
         return ResponseData.Error(404, $"unknown route {method} {path}");
@@ -219,15 +223,10 @@ public partial class AgentRestServer : Node
 
     private ResponseData HandleInputAction(HttpListenerRequest req)
     {
-        if (!TryReadJson(req, out var doc, out var err)) return err;
-        string action;
-        string mode;
-        using (doc)
-        {
-            var root = doc.RootElement;
-            action = root.TryGetProperty("action", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() : null;
-            mode = root.TryGetProperty("mode", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() : null;
-        }
+        // `GET /input/action?action=&mode=`, or the same fields in a POST body (the query wins).
+        if (!TryReadFields(req, new[] { "action", "mode" }, out var f, out var err)) return err;
+        var action = f.GetValueOrDefault("action");
+        var mode = f.GetValueOrDefault("mode");
 
         if (string.IsNullOrEmpty(action))
             return ResponseData.Error(400, "missing 'action'");
@@ -440,6 +439,12 @@ public partial class AgentRestServer : Node
 
     private ResponseData HandleScreenshot(HttpListenerRequest req)
     {
+        // A headless boot (`--headless`, or `--display-driver headless`) always runs the
+        // dummy renderer, whatever --rendering-driver/--rendering-method say: nothing is
+        // drawn, so there is no image to read (SubViewports included). Say so plainly.
+        if (DisplayServer.GetName() == "headless")
+            return ResponseData.Error(503, "headless: no viewport image (the dummy renderer draws nothing); boot windowed");
+
         var viewport = GetViewport();
         if (viewport == null) return ResponseData.Error(500, "no viewport");
 
@@ -548,39 +553,35 @@ public partial class AgentRestServer : Node
 
     private ResponseData HandleUiPress(HttpListenerRequest req)
     {
-        if (!TryReadJson(req, out var doc, out var err)) return err;
-        using (doc)
+        // `GET /ui/press?id=`, or `{"id": ...}` in a POST body (the query wins).
+        if (!TryReadFields(req, new[] { "id" }, out var f, out var err)) return err;
+        var id = f.GetValueOrDefault("id");
+        if (string.IsNullOrEmpty(id))
+            return ResponseData.Error(400, "missing or empty 'id'");
+
+        var nodes = CollectAgentControls();
+        var matches = new List<BaseButton>();
+        foreach (var n in nodes)
         {
-            string id = null;
-            if (doc.RootElement.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String)
-                id = idEl.GetString();
-            if (string.IsNullOrEmpty(id))
-                return ResponseData.Error(400, "missing or empty 'id'");
-
-            var nodes = CollectAgentControls();
-            var matches = new List<BaseButton>();
-            foreach (var n in nodes)
-            {
-                if (n.GetMeta(AgentIdMeta).AsString() == id) matches.Add(n);
-            }
-            if (matches.Count == 0)
-                return ResponseData.Error(404, $"no control with id '{id}'");
-            if (matches.Count > 1)
-                return ResponseData.Error(400, $"ambiguous id '{id}' matches {matches.Count} controls");
-
-            var btn = matches[0];
-            if (btn.Disabled) return ResponseData.Error(400, $"control '{id}' is disabled");
-            if (!btn.IsVisibleInTree()) return ResponseData.Error(400, $"control '{id}' is not visible");
-
-            if (btn.ToggleMode) btn.ButtonPressed = !btn.ButtonPressed;
-            btn.EmitSignal(BaseButton.SignalName.Pressed);
-
-            return ResponseData.Json(200, new Dictionary<string, object>
-            {
-                ["ok"] = true,
-                ["id"] = id,
-            });
+            if (n.GetMeta(AgentIdMeta).AsString() == id) matches.Add(n);
         }
+        if (matches.Count == 0)
+            return ResponseData.Error(404, $"no control with id '{id}'");
+        if (matches.Count > 1)
+            return ResponseData.Error(400, $"ambiguous id '{id}' matches {matches.Count} controls");
+
+        var btn = matches[0];
+        if (btn.Disabled) return ResponseData.Error(400, $"control '{id}' is disabled");
+        if (!btn.IsVisibleInTree()) return ResponseData.Error(400, $"control '{id}' is not visible");
+
+        if (btn.ToggleMode) btn.ButtonPressed = !btn.ButtonPressed;
+        btn.EmitSignal(BaseButton.SignalName.Pressed);
+
+        return ResponseData.Json(200, new Dictionary<string, object>
+        {
+            ["ok"] = true,
+            ["id"] = id,
+        });
     }
 
     // ---- Typed domain interfaces --------------------------------------------
@@ -738,6 +739,30 @@ public partial class AgentRestServer : Node
         "agent_demo",
         "no scene-handoff demo scene; expected scenes/main.tscn or scenes/demo/destination.tscn (group 'agent_demo', IAgentDemo)",
         d => d.GetDemoState());
+
+    // Backed by the ContentBootstrap AUTOLOAD (always present, like /display); read-only. A
+    // failed boot load is in the state (`loaded`, `error`), never a 503.
+    private static readonly Domain<IAgentContent> ContentSurface = new(
+        "agent_content",
+        "no content surface; expected the ContentBootstrap autoload in group 'agent_content' implementing IAgentContent",
+        c => c.GetContentState());
+
+    // Scene-backed by the DEV-ONLY lab, booted by path and never reached from the game: its 503
+    // names the scene to boot (the dev-only scenes' "scene-hinting 503").
+    private static readonly Domain<IAgentDevLab> DevLab = new(
+        "agent_devlab",
+        $"no dev lab; boot {godottemplate.UI.GameScenes.DevOnlyLab} (godot-mono --path . {godottemplate.UI.GameScenes.DevOnlyLab}) — a dev-only scene (group 'agent_devlab', IAgentDevLab)",
+        l => l.GetDevLabState());
+
+    // `GET ?seed=<uint64>`, or the same field in a POST body (a string, like every 64-bit seed).
+    private ResponseData HandleDevLabSeed(HttpListenerRequest req)
+        => Route(req, DevLab, new[] { "seed" }, (l, f) =>
+        {
+            if (!f.TryGetValue("seed", out var raw)) return (false, "missing 'seed' (a decimal uint64)");
+            if (!ulong.TryParse(raw, NumberStyles.None, CultureInfo.InvariantCulture, out var seed))
+                return (false, $"invalid 'seed' value '{raw}' (expected a decimal uint64)");
+            return l.SetSeed(seed);
+        });
 
     // -------------------------------------------------------------------------
 

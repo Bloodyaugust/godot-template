@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/demo/DestinationScreen.cs" id="1_dest"]
 [ext_resource type="Script" path="res://scripts/ui/PaletteRect.cs" id="2_rect"]
 [ext_resource type="PackedScene" path="res://scenes/ui/top_bar.tscn" id="3_topbar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu_overlay.tscn" id="4_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/confirm_dialog.tscn" id="9_dialog"]
 
 [node name="Destination" type="Node2D"]
 script = ExtResource("1_dest")
@@ -94,3 +95,7 @@ MenuAgentId = "destination.menu"
 unique_name_in_owner = true
 layout_mode = 1
 AgentIdPrefix = "destination.menu"
+
+[node name="QuitDialog" parent="Chrome/Root" instance=ExtResource("9_dialog")]
+unique_name_in_owner = true
+layout_mode = 1

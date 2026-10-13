@@ -12,6 +12,11 @@ documented in `scripts/content/README.md`; file conventions in
   bools, string lists, `[x, y]` int pairs, string/int maps, arrays, snake_case
   enums (`ReqEnum<T>`), and `RejectUnknownKeys`. `ParseArray` parses a whole
   file's top-level array.
+- `ExampleDef.cs` — **placeholder, delete it** once a real definition type lands:
+  `ExampleDef` (id, name, int cost, snake_case `ExampleKind`) and
+  `ExampleContent.Parse(json)`, which parses `resources/definitions/examples.json`,
+  rejects duplicate ids and throws a `ContentError`. The shape a real parser copies;
+  `ContentBootstrap` (`scripts/content/`) loads it at boot.
 - `ContentError.cs` — the engine-free content failure, formatted as one
   `[Content] file (context): reason` line.
 

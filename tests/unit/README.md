@@ -19,7 +19,8 @@ files, with a row in the table below pointing at it.
 |------|--------|
 | `godottemplate.Tests.csproj` | The rig: xUnit + the `scripts/core/` source include. Deliberately not in `godot-template.sln`, so Godot's editor build never compiles it. |
 | `GameVersionTests.cs` | `GameVersion`: `Current` well-formedness, numeric ordering, empty-sorts-first, malformed rejection — and the proof the wiring works. |
-| `Content/` | `scripts/core/content/`: the JSON definition reader's typed accessors and fail-loud paths. |
+| `Content/` | `scripts/core/content/`: the JSON definition reader's typed accessors and fail-loud paths, and the placeholder `ExampleContent` parser. |
 | `Loading/` | `scripts/core/loading/`: the background loader's publish-on-poll, counting, warnings and fault handling. |
 | `Persistence/` | `scripts/core/persistence/`: the record codec round-trip, bad-file reads and the one-file-per-record folder. |
+| `Snapshots/` | `scripts/core/snapshots/`: the agent-state snapshot builders refusing non-snake_case keys, raw 64-bit integers, enums and other non-plain values. |
 | `Validation/` | `scripts/core/validation/`: `BuildResult<T>` collecting every `BuildIssue`. |

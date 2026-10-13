@@ -1,7 +1,8 @@
 # Scene handoff (CLAUDE.md, "Scene handoff"): the hub's Travel button fades out, holds the
 # loading screen, changes to scenes/demo/destination.tscn, whose AsyncLoader job runs under it,
 # fades in and frees the controls; the destination's Return finishes the launch on GameSession
-# and goes back the same way. Direct boot of the destination: handoff_direct.hurl.
+# and goes back the same way. Along the way: the hub's demo_ping floats a label that frees
+# itself, and the destination's menu Quit asks through the confirm dialog (listing the payload). Direct boot of the destination: handoff_direct.hurl.
 
 # ── 0. Boot: the hub, free, nothing in flight ────────────────────────────────
 GET http://{{host}}/demo/state
@@ -20,6 +21,27 @@ GET http://{{host}}/ui/controls
 HTTP 200
 [Asserts]
 jsonpath "$[?(@.id == 'main.travel' && @.visible == true && @.disabled == false)]" exists
+
+# A demo_ping floats a label over the player sprite; it rises, fades and frees itself.
+POST http://{{host}}/input/action
+{"action": "demo_ping", "mode": "tap"}
+HTTP 200
+
+GET http://{{host}}/demo/state
+[Options]
+retry: 20
+retry-interval: 20ms
+HTTP 200
+[Asserts]
+jsonpath "$.hub.floating_labels" >= 1
+
+GET http://{{host}}/demo/state
+[Options]
+retry: 40
+retry-interval: 100ms
+HTTP 200
+[Asserts]
+jsonpath "$.hub.floating_labels" == 0
 
 # ── 1. Travel: the controls lock and the launch is on the session ────────────
 POST http://{{host}}/ui/press
@@ -121,6 +143,43 @@ jsonpath "$.lock" == "menu"
 
 POST http://{{host}}/ui/press
 {"id": "destination.menu.close"}
+HTTP 200
+
+GET http://{{host}}/ui/controls
+[Options]
+retry: 20
+retry-interval: 50ms
+HTTP 200
+[Asserts]
+jsonpath "$[?(@.id == 'destination.return' && @.visible == true && @.disabled == false)]" exists
+
+# The menu's Quit asks first, listing the payload quitting leaves; Cancel keeps the game up.
+POST http://{{host}}/ui/press
+{"id": "destination.menu"}
+HTTP 200
+
+POST http://{{host}}/ui/press
+{"id": "destination.menu.quit"}
+HTTP 200
+
+GET http://{{host}}/demo/state
+[Options]
+retry: 20
+retry-interval: 50ms
+HTTP 200
+[Asserts]
+jsonpath "$.dialog.open" == true
+jsonpath "$.dialog.items[0]" startsWith "Payload "
+jsonpath "$.lock" == "menu"
+
+GET http://{{host}}/ui/controls
+HTTP 200
+[Asserts]
+jsonpath "$[?(@.id == 'destination.quit.confirm' && @.visible == true)]" exists
+jsonpath "$[?(@.id == 'destination.return' && @.disabled == true)]" exists
+
+POST http://{{host}}/ui/press
+{"id": "destination.quit.cancel"}
 HTTP 200
 
 GET http://{{host}}/ui/controls

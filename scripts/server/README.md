@@ -39,7 +39,7 @@ A typed surface is declared once in `AgentRestServer.cs` as a `Domain<T>(Group, 
 - `Route(req, domain, keys, (target, fields) => (ok, error))` — find the implementer (`503` when absent), read `keys` through `TryReadFields`, run the op, and wrap the post-operation snapshot in `{ok, state, error?}`. An op that rejects a field value returns `(false, message)` like any other failure.
 - `Find<T>(group)` and `Envelope(state, result)` — the building blocks, for a route that has to step outside that shape.
 
-`/example/state`, `/display/*`, `/debug/*`, `/camera/*`, `/transition/*`, `/session/state` and `/demo/state` are the shipped users.
+`/example/state`, `/display/*`, `/debug/*`, `/camera/*`, `/transition/*`, `/session/state`, `/content/state`, `/demo/state` and `/devlab/*` are the shipped users.
 
 ## Endpoints
 
@@ -58,9 +58,10 @@ Sanity check.
 `-dev` in debug builds so a dev build never claims to be the release of the same
 number.
 
-### `POST /input/action`
+### `POST /input/action` (or `GET /input/action?action=&mode=`)
 
-Triggers a project input-mapped action.
+Triggers a project input-mapped action. The fields come from a JSON POST body or the
+query string (the query wins), read through the same parser as every other route.
 
 ```json
 { "action": "move_up", "mode": "press" }
@@ -77,6 +78,10 @@ Responses:
 - `200 {"ok": true}` on success
 - `400 {"error": "..."}` for unknown action, unknown mode, missing field, or invalid JSON
 - `413 {"error": "body too large"}` if the body exceeds 64 KB
+
+```sh
+curl 'http://127.0.0.1:8080/input/action?action=ui_cancel&mode=tap'
+```
 
 ### `POST /input/click`
 
@@ -152,7 +157,14 @@ Responses:
 
 - `200` with body bytes and `Content-Type: image/png|image/jpeg|image/webp` on success.
 - `400 {"error": "..."}` for an unknown `format` or unparseable `quality`.
+- `503 {"error": "headless: no viewport image ..."}` on a headless boot (see below).
 - `500 {"error": "..."}` if the viewport image is unavailable or encoding fails.
+
+**Headless has no image.** `--headless` (or `--display-driver headless`) always runs the
+dummy rendering server, whatever `--rendering-driver` / `--rendering-method` say — nothing
+is drawn, so neither the root viewport nor a `SubViewport` has pixels to read (checked on
+4.7: every combination returns the dummy texture). Boot windowed for screenshots
+(`WINDOWED=1` / `-Windowed` with the Hurl runners).
 
 ```sh
 # save a PNG to a temp file (no in-game persistence)
@@ -228,16 +240,18 @@ Returns the list of agent-tagged buttons in the active scene:
   scenarios — which can't do arithmetic in captures — aim without hardcoding
   layout (`tests/hurl/display_input.hurl`).
 
-#### `POST /ui/press`
+#### `POST /ui/press` (or `GET /ui/press?id=`)
 
 ```json
 { "id": "main.quit" }
 ```
 
+The `id` comes from a JSON POST body or the query string (the query wins).
+
 Emits the button's `Pressed` signal (for toggles, flips `ButtonPressed` first so `Toggled` fires too). Responses:
 
 - `200 {"ok": true, "id": "..."}`
-- `400` for missing/empty `id`, disabled control, hidden control, or ambiguous id
+- `400` for missing/empty `id`, disabled control, hidden control, ambiguous id, or invalid JSON
 - `404` if no control matches
 
 #### Conventions
@@ -401,6 +415,20 @@ The `GameSession` autoload (group `agent_session`, `IAgentSession` — see
 exact only to 2^53), so every seed goes out as its decimal text — and a route that takes one
 should parse a string.
 
+### `GET /content/state` — the content pipeline (typed domain interface)
+
+The `ContentBootstrap` autoload (group `agent_content`, `IAgentContent` — see
+`scripts/content/README.md`), which loads every definitions file at boot. Always present;
+read-only. A failed load is reported in the body (`loaded: false`, the latched `error` line),
+never as a 503, so a scenario can tell a bad file from a missing server.
+
+```json
+{ "loaded": true, "error": null, "files": ["examples.json"], "example_count": 3,
+  "examples": [ { "id": "example_alpha", "name": "Alpha", "cost": 10, "kind": "basic" }, ... ] }
+```
+
+`examples` is the placeholder definition type — replace it with the real types' summaries.
+
 ### `GET /demo/state` — the scene-handoff demo (layered scene snapshot)
 
 `IAgentDemo`, implemented by **both** demo scenes — the hub (`scenes/main.tscn`) and the
@@ -413,12 +441,46 @@ under its own name:
   "lock": null,               // loading | transition | menu, null when the controls are free
   "session": { ... },         // /session/state's snapshot
   "transition": "none",       // the overlay's stage
+  "dialog": { "open": false, "title": "", "body": "", "items": [], "buttons": [] },  // buttons: [{label, agent_id}]
   "destination": { "seed": "...", "payload": "Payload 44889", "returning": false, "arrived": true,
                    "loader": { "stage": "done", "attempts": 1, "failures": 0, "elapsed_ms": 171, "error": null } } }
 ```
 
-The hub's block is `hub: { travelling, arriving }`. The buttons that drive the flow are
+The hub's block is `hub: { travelling, arriving, floating_labels }` (`floating_labels` counts the demo's live floating labels, spawned by the `demo_ping` action). The buttons that drive the flow are
 `main.travel` and `destination.return` (`/ui/press`; refused with `400` while locked).
+
+### `/devlab/*` — the dev-only lab (typed domain interface)
+
+`IAgentDevLab` on the dev lab's controller (`scripts/devtools/DevLab.cs`, group `agent_devlab`)
+— the worked **dev-only scene** (`CLAUDE.md`, *Dev-only scenes*). Present only while
+`scenes/devtools/dev_lab.tscn` is the current scene, which nothing in the game navigates to: boot
+it by path (`godot-mono --path . res://scenes/devtools/dev_lab.tscn`, or `# boot_scene:` in a
+Hurl file). Anywhere else every `/devlab/*` route is a **scene-hinting 503** — its `error` names
+the scene to boot:
+
+```json
+{ "error": "no dev lab; boot res://scenes/devtools/dev_lab.tscn (godot-mono --path . res://scenes/devtools/dev_lab.tscn) — a dev-only scene (group 'agent_devlab', IAgentDevLab)" }
+```
+
+#### `GET /devlab/state`
+
+```json
+{ "seed": "42",             // a string, like every 64-bit seed
+  "seed_source": "env",     // env (GODOT_DEVLAB_SEED) | default (unset or unparseable) | agent (/devlab/seed)
+  "rolls": 1,               // draws since the seed was set
+  "last_roll": 1434747710 } // null before the first draw
+```
+
+#### `GET` or `POST /devlab/reroll`
+
+Draw the next value from the seeded generator (the `devlab.reroll` button does the same).
+`{ok, state}`.
+
+#### `GET` or `POST /devlab/seed`
+
+`?seed=<uint64>` (or `{"seed": "<uint64>"}`): reseed; `rolls` resets to 0 and `last_roll` to
+null, so the same seed replays the same draws. `{ok, state, error?}`; `400` on a missing seed or
+one that isn't a decimal uint64.
 
 ### `POST /quit` (also accepts `GET`)
 
@@ -493,6 +555,7 @@ curl http://127.0.0.1:8080/ui/controls
 curl -X POST http://127.0.0.1:8080/ui/press \
      -H 'Content-Type: application/json' \
      -d '{"id":"main.quit"}'
+curl 'http://127.0.0.1:8080/ui/press?id=main.quit'   # the GET alias
 
 curl -X POST http://127.0.0.1:8080/quit
 ```

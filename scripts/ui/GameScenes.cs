@@ -14,6 +14,12 @@ public static class GameScenes
     public const string MainMenu = "res://scenes/main.tscn";
     /// <summary>The scene-handoff demo's destination (<c>scripts/demo/</c>); delete with the demo.</summary>
     public const string Destination = "res://scenes/demo/destination.tscn";
+    /// <summary>
+    /// <b>Dev-only</b>: the dev lab (<c>scripts/devtools/DevLab.cs</c>). Never navigated to — no
+    /// screen routes here; it is booted by path (<c>godot-mono --path . res://scenes/devtools/dev_lab.tscn</c>)
+    /// and named here only so its 503 hint and docs cite one symbol.
+    /// </summary>
+    public const string DevOnlyLab = "res://scenes/devtools/dev_lab.tscn";
     // public const string Game = "res://scenes/game/game.tscn";
     // public const string Settings = "res://scenes/ui/settings.tscn";
 }

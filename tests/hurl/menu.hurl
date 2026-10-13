@@ -1,7 +1,7 @@
 # The main scene's chrome: the top bar's Menu button opens the menu overlay, Settings swaps
 # to the shared settings panel (scenes/ui/settings_panel.tscn) whose buttons drive
 # /display/*, Back returns to the menu root, Close and Esc close it, and the menu's Quit
-# quits. Hidden buttons report visible:false and refuse /ui/press, so every step walks the
+# asks through the confirm dialog, whose Quit quits (the dialog itself: dialog.hurl). Hidden buttons report visible:false and refuse /ui/press, so every step walks the
 # real navigation. See tests/hurl/README.md for the idiom.
 
 # ── 0. Boot: the top bar is up, the menu is closed ────────────────────────────────
@@ -31,9 +31,11 @@ jsonpath "$.window_size.width" >= 1280
 jsonpath "$.window_size.height" >= 720
 
 # ── 1. Menu → Settings ────────────────────────────────────────────────────────────
-POST http://{{host}}/ui/press
-{"id": "main.menu"}
+GET http://{{host}}/ui/press?id=main.menu
 HTTP 200
+[Asserts]
+jsonpath "$.ok" == true
+jsonpath "$.id" == "main.menu"
 
 GET http://{{host}}/ui/controls
 [Options]
@@ -136,6 +138,12 @@ HTTP 200
 jsonpath "$[?(@.id == 'main.menu.close' && @.visible == false)]" exists
 
 # ── 4. Esc opens it, Esc closes it ────────────────────────────────────────────────
+# A bad mode is a 400 (GET alias, query fields) and presses nothing.
+GET http://{{host}}/input/action?action=ui_cancel&mode=hold
+HTTP 400
+[Asserts]
+jsonpath "$.error" contains "mode"
+
 POST http://{{host}}/input/action
 {"action": "ui_cancel", "mode": "tap"}
 HTTP 200
@@ -148,9 +156,10 @@ HTTP 200
 [Asserts]
 jsonpath "$[?(@.id == 'main.menu.close' && @.visible == true)]" exists
 
-POST http://{{host}}/input/action
-{"action": "ui_cancel", "mode": "tap"}
+GET http://{{host}}/input/action?action=ui_cancel&mode=tap
 HTTP 200
+[Asserts]
+jsonpath "$.ok" == true
 
 GET http://{{host}}/ui/controls
 [Options]
@@ -160,7 +169,7 @@ HTTP 200
 [Asserts]
 jsonpath "$[?(@.id == 'main.menu.close' && @.visible == false)]" exists
 
-# ── 5. Teardown through the menu's Quit (ends the instance) ──────────────────────
+# ── 5. Teardown through the menu's Quit and the dialog's (ends the instance) ─────
 POST http://{{host}}/ui/press
 {"id": "main.menu"}
 HTTP 200
@@ -175,6 +184,18 @@ jsonpath "$[?(@.id == 'main.menu.quit' && @.visible == true)]" exists
 
 POST http://{{host}}/ui/press
 {"id": "main.menu.quit"}
+HTTP 200
+
+GET http://{{host}}/ui/controls
+[Options]
+retry: 20
+retry-interval: 100ms
+HTTP 200
+[Asserts]
+jsonpath "$[?(@.id == 'main.quit.confirm' && @.visible == true)]" exists
+
+POST http://{{host}}/ui/press
+{"id": "main.quit.confirm"}
 HTTP 200
 [Asserts]
 jsonpath "$.ok" == true

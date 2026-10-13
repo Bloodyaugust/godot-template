@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 using godottemplate.Camera;
+using godottemplate.Core.Snapshots;
 using godottemplate.Demo;
 using godottemplate.Server;
 using godottemplate.Session;
@@ -12,7 +13,8 @@ namespace godottemplate.UI;
 /// Controller for the template's main scene (<c>scenes/main.tscn</c>), the hub of the
 /// scene-handoff demo (<c>CLAUDE.md</c>, <i>Scene handoff</i>). Wires the chrome — the
 /// <see cref="TopBar"/>'s Menu button and Esc open the <see cref="MenuOverlay"/>, Esc closes it
-/// again, and the overlay's Quit quits — and the Travel button: lock the controls, launch on
+/// again, and the overlay's Quit asks through the <see cref="ConfirmDialog"/> (<c>main.quit.confirm</c>
+/// / <c>main.quit.cancel</c>) — and the Travel button: lock the controls, launch on
 /// <see cref="GameSession"/>, fade out, hold the loading screen and change to the destination.
 /// Arriving back under a held loading screen it fades in and frees the controls on
 /// <see cref="Transition.Finished"/>. The scene's structure lives in the <c>.tscn</c>.
@@ -22,6 +24,7 @@ public partial class MainScreen : Node2D, IAgentDemo
     public const string SceneName = "hub";
 
     private MenuOverlay _menu;
+    private ConfirmDialog _quit;
     private Button _travel;
     private Player _player;
     private ZoomCamera _camera;
@@ -32,11 +35,16 @@ public partial class MainScreen : Node2D, IAgentDemo
     {
         AddToGroup(HandoffState.AgentGroup);
         _menu = GetNode<MenuOverlay>("%MenuOverlay");
+        _quit = GetNode<ConfirmDialog>("%QuitDialog");
         _travel = GetNode<Button>("%TravelButton");
         _player = GetNode<Player>("%Player");
         _camera = GetNode<ZoomCamera>("%Camera");
         GetNode<TopBar>("%TopBar").MenuPressed += _menu.Open;
-        _menu.QuitPressed += () => GetTree().Quit();
+        _menu.QuitPressed += () => HandoffState.AskQuit(_quit, "main");
+        _quit.Chosen += index =>
+        {
+            if (index == HandoffState.QuitConfirm) GetTree().Quit();
+        };
         _travel.Pressed += OnTravelPressed;
 
         // Back from the destination: the loading screen is still held over us.
@@ -59,7 +67,8 @@ public partial class MainScreen : Node2D, IAgentDemo
     // Esc exactly like a real key press.
     public override void _Process(double delta)
     {
-        if (Input.IsActionJustPressed("ui_cancel"))
+        // The quit dialog takes Esc itself while it is up.
+        if (!_quit.IsOpen && Input.IsActionJustPressed("ui_cancel"))
         {
             if (_menu.IsOpen) _menu.Close();
             else _menu.Open();
@@ -90,7 +99,7 @@ public partial class MainScreen : Node2D, IAgentDemo
     /// <summary>Why the player's controls are locked, or null when they are free.</summary>
     private string ControlsLock =>
         _travelling || _arriving || (Transition.Instance?.Stage ?? TransitionStage.None) != TransitionStage.None ? "transition"
-        : _menu.IsOpen ? "menu"
+        : _menu.IsOpen || _quit.IsOpen ? "menu"
         : null;
 
     private void ApplyLock()
@@ -101,9 +110,8 @@ public partial class MainScreen : Node2D, IAgentDemo
         _travel.Disabled = locked;
     }
 
-    public Dictionary<string, object> GetDemoState() => HandoffState.Build(SceneName, ControlsLock, new Dictionary<string, object>
-    {
-        ["travelling"] = _travelling,
-        ["arriving"] = _arriving,
-    });
+    public Dictionary<string, object> GetDemoState() => HandoffState.Build(SceneName, ControlsLock, _quit, Snapshot.Of(
+        ("travelling", _travelling),
+        ("arriving", _arriving),
+        ("floating_labels", _player.LiveLabels)));
 }

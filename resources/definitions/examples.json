@@ -1,0 +1,5 @@
+[
+  {"id": "example_alpha", "name": "Alpha", "cost": 10, "kind": "basic"},
+  {"id": "example_beta", "name": "Beta", "cost": 25, "kind": "heavy_support"},
+  {"id": "example_gamma", "name": "Gamma", "cost": 0, "kind": "basic"}
+]

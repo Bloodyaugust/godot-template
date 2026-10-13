@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Godot;
 using godottemplate.Core.Loading;
+using godottemplate.Core.Snapshots;
 using godottemplate.Server;
 using godottemplate.Session;
 using godottemplate.UI;
@@ -29,6 +30,7 @@ public partial class DestinationScreen : Node2D, IAgentDemo
 
     private readonly AsyncLoader<ulong, string> _loader = new(Prepare, GD.PushWarning, GD.PushError);
     private MenuOverlay _menu;
+    private ConfirmDialog _quit;
     private Button _return;
     private Label _payload;
     private ulong _seed;
@@ -41,10 +43,16 @@ public partial class DestinationScreen : Node2D, IAgentDemo
     {
         AddToGroup(HandoffState.AgentGroup);
         _menu = GetNode<MenuOverlay>("%MenuOverlay");
+        _quit = GetNode<ConfirmDialog>("%QuitDialog");
         _return = GetNode<Button>("%ReturnButton");
         _payload = GetNode<Label>("%Payload");
         GetNode<TopBar>("%TopBar").MenuPressed += _menu.Open;
-        _menu.QuitPressed += () => GetTree().Quit();
+        // The items list shows what quitting leaves behind (the loaded payload).
+        _menu.QuitPressed += () => HandoffState.AskQuit(_quit, Id, _loaded ? new[] { _loader.Result } : null);
+        _quit.Chosen += index =>
+        {
+            if (index == HandoffState.QuitConfirm) GetTree().Quit();
+        };
         _return.Pressed += OnReturnPressed;
 
         var launch = GameSession.Launch;
@@ -77,7 +85,8 @@ public partial class DestinationScreen : Node2D, IAgentDemo
             _payload.Text = _loader.Result;
             Arrive();
         }
-        if (Input.IsActionJustPressed("ui_cancel"))
+        // The quit dialog takes Esc itself while it is up.
+        if (!_quit.IsOpen && Input.IsActionJustPressed("ui_cancel"))
         {
             if (_menu.IsOpen) _menu.Close();
             else _menu.Open();
@@ -144,26 +153,22 @@ public partial class DestinationScreen : Node2D, IAgentDemo
     private string ControlsLock =>
         !_loaded ? "loading"
         : _returning || !_arrived || (Transition.Instance?.Stage ?? TransitionStage.None) != TransitionStage.None ? "transition"
-        : _menu.IsOpen ? "menu"
+        : _menu.IsOpen || _quit.IsOpen ? "menu"
         : null;
 
     private void ApplyLock() => _return.Disabled = ControlsLock != null;
 
     // ---- Agent surface ------------------------------------------------------------------
 
-    public Dictionary<string, object> GetDemoState() => HandoffState.Build(Id, ControlsLock, new Dictionary<string, object>
-    {
-        ["seed"] = _seed.ToString(),
-        ["payload"] = _loaded ? _loader.Result : null,
-        ["returning"] = _returning,
-        ["arrived"] = _arrived,
-        ["loader"] = new Dictionary<string, object>
-        {
-            ["stage"] = _loader.Stage.ToString().ToLowerInvariant(),
-            ["attempts"] = _loader.Attempts,
-            ["failures"] = _loader.Failures,
-            ["elapsed_ms"] = (long)_loader.Elapsed.TotalMilliseconds,
-            ["error"] = _loader.Error,
-        },
-    });
+    public Dictionary<string, object> GetDemoState() => HandoffState.Build(Id, ControlsLock, _quit, Snapshot.Of(
+        ("seed", Snapshot.Wide(_seed)),
+        ("payload", _loaded ? _loader.Result : null),
+        ("returning", _returning),
+        ("arrived", _arrived),
+        ("loader", Snapshot.Of(
+            ("stage", Snapshot.Name(_loader.Stage)),
+            ("attempts", _loader.Attempts),
+            ("failures", _loader.Failures),
+            ("elapsed_ms", (int)_loader.Elapsed.TotalMilliseconds),
+            ("error", _loader.Error)))));
 }

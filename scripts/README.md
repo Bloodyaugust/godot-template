@@ -9,7 +9,7 @@ Pure data classes — `[GlobalClass]` Resource subclasses backing `.tres` files 
 | Directory | Holds |
 |-----------|-------|
 | `core/` | The engine-free layer (no Godot types), compiled into `tests/unit/`. |
-| `content/` | The Godot side of content loading. |
+| `content/` | The Godot side of content loading and the `ContentBootstrap` autoload that loads it at boot. |
 | `session/` | Cross-scene state: the `GameSession` carrier, persistence (`PlayerProfile`, record stores). |
 | `server/` | The debug-only agent REST server and its typed `IAgent*` surfaces. |
 | `ui/` | Shared UI scaffolding: palette, display scale, scene registry, the transition overlay, top bar, menu overlay, settings panel, the main scene's controller. |
