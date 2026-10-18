@@ -35,11 +35,17 @@ than this list.
 
 - `scripts/test/Player.cs` — the WASD `Sprite2D` in `scenes/main.tscn` (group
   `player`), with the hub's `ZoomCamera` as its child; the `QuitButton`'s
-  `pressed` is connected to it. **Always stripped.**
+  `pressed` is connected to it, it floats `floating_label.tscn` on
+  `demo_ping`, and it is the only reader of the `move_*` and `demo_ping` input
+  actions in `project.godot`. **Always stripped.**
 - The **scene-handoff demo pair** — the hub's Travel button (`main.travel`,
   in `scenes/main.tscn`, driven by `scripts/ui/MainScreen.cs`), the
   destination (`scenes/demo/`, `scripts/demo/`), `GameScenes.Destination`,
-  `IAgentDemo` + `/demo/state` (group `agent_demo`). **Stripped by default**;
+  `IAgentDemo` + `/demo/state` (group `agent_demo`). Its
+  `scripts/demo/HandoffState.cs` also owns the **quit question** the hub's
+  chrome asks (`HandoffState.AskQuit` / `QuitConfirm` on the `QuitDialog`,
+  `main.quit.*`), so stripping the demo means moving that into `MainScreen`
+  (5.6), not deleting it. **Stripped by default**;
   the user may keep it as a working reference for `Transition` +
   `GameSession` + `AsyncLoader` until the first real screen pair exists.
 - The **dev lab** — `scenes/devtools/dev_lab.tscn`, `scripts/devtools/DevLab.cs`,
@@ -76,9 +82,9 @@ blind.
 
 - Keepers (pass against the stub): `smoke.hurl` (after the trim in 5.6),
   `menu.hurl`, `input.hurl` and `display_input.hurl` (they press, drag and
-  click the kept `main.quit`), `debug_view.hurl`, `transition.hurl` (after
-  the trim in 5.6), `content.hurl` (until the example definitions are
-  replaced — then it is retargeted, not deleted).
+  click the kept `main.quit`), `debug_view.hurl`, `transition.hurl` and
+  `dialog.hurl` (after the retarget in 5.6), `content.hurl` (until the
+  example definitions are replaced — then it is retargeted, not deleted).
 - Demo-bound: `handoff.hurl` and `handoff_direct.hurl` (go with the
   scene-handoff demo), `camera.hurl` (the camera follows the demo Player; goes
   with it), `devlab.hurl` and `devlab_absent.hurl` (go with the dev lab, only
@@ -277,18 +283,29 @@ Rewrite `scenes/main.tscn` as a stub that keeps the chrome:
   `text = "Quit"` and `metadata/agent_id = "main.quit"`, its `pressed` signal
   connected to an `OnQuitPressed` handler on the root.
 - The `Chrome` `CanvasLayer` (layer 20) exactly as shipped: the shared
-  `TopBar` (`MenuAgentId = "main.menu"`) and `MenuOverlay`
-  (`AgentIdPrefix = "main.menu"`).
-- No `Player`, no `Camera`, and — unless the scene-handoff demo is kept — no
-  `TravelButton`.
+  `TopBar` (`MenuAgentId = "main.menu"`), `MenuOverlay`
+  (`AgentIdPrefix = "main.menu"`) and the `QuitDialog` (`confirm_dialog.tscn`).
+- No `Player`, no `Camera`, no `floating_label.tscn` / `ZoomCamera` /
+  `Player` / `icon.svg` ext_resources, and — unless the scene-handoff demo is
+  kept — no `TravelButton`. Give the `QuitButton` `unique_name_in_owner` if
+  the controller looks it up.
 
 Trim `scripts/ui/MainScreen.cs` to match: keep the chrome wiring (Menu and
-Esc open the overlay, Esc closes it, the overlay's Quit quits) and its
-controls-lock reason, add `OnQuitPressed` (`GetTree().Quit()`), and drop the
-`Player`, `ZoomCamera` and `godottemplate.Test` references. Unless the
-scene-handoff demo is kept, also drop Travel, the arrival fade-in,
-`IAgentDemo` and the `godottemplate.Demo` using. Rewrite its summary to
-describe the stub.
+Esc open the overlay, Esc closes it, the overlay's Quit asks through the
+`QuitDialog`, whose Quit quits) and its controls-lock reason, add a public
+`OnQuitPressed` (`GetTree().Quit()`), and drop the `Player`, `ZoomCamera` and
+`godottemplate.Test` references. Unless the scene-handoff demo is kept, also
+drop Travel, the arrival fade-in, `IAgentDemo` and the `godottemplate.Demo`
+using — and move the quit question in from `HandoffState` (`AskQuit`'s
+`Setup("Quit?", <lorem>, [("Cancel", "main.quit.cancel"), ("Quit",
+"main.quit.confirm")])` + `Open()`, and the `QuitConfirm = 1` index). With
+the Player gone the lock has nothing left to apply to, so apply it by
+disabling `main.quit` — that keeps it observable over `/ui/controls`, which
+the Hurl retarget below relies on. Rewrite its summary to describe the stub.
+
+In `project.godot`, drop the input actions only the Player read (`move_up`,
+`move_down`, `move_left`, `move_right`, `demo_ping`); `[autoload]` stays
+untouched.
 
 `scripts/ui/GameScenes.cs` already points its `MainMenu` constant at
 `res://scenes/main.tscn`; remove `Destination` with the scene-handoff demo,
@@ -297,9 +314,19 @@ and `DevOnlyLab` with the dev lab.
 Also trim the Hurl files bound to the demo scene: in `tests/hurl/smoke.hurl`,
 remove the `/nodes?group=player` entry (keep everything else — the boot-wait
 `/status` entry, the `/ui/controls` asserts on `main.quit` and `main.menu`,
-and the closing `/ui/press` teardown); in `tests/hurl/transition.hurl`,
-remove the `/demo/state` entries unless the scene-handoff demo is kept (the
-transition asserts stand without them); delete `tests/hurl/camera.hurl`.
+and the closing `/ui/press` teardown); delete `tests/hurl/camera.hurl`.
+Unless the scene-handoff demo is kept, `/demo/state` is gone, so retarget its
+readers onto `/ui/controls`: in `tests/hurl/transition.hurl`, each
+`$.lock`/`$.controls_locked` assert becomes `main.quit`'s `disabled` (true
+while the overlay holds, false once free) and the `$.scene == "hub"` checks
+drop; in `tests/hurl/dialog.hurl`, the `$.dialog.open` asserts become the
+visibility of `main.quit.confirm` / `main.quit.cancel` (once set up, the
+dialog's buttons stay listed with `visible: false` while it is closed — assert
+that positive form, never `not exists`; Rule 1 in `tests/hurl/README.md`),
+the `$.dialog.title` / `buttons[]` asserts drop, the `main.travel` assert
+becomes `main.quit` disabled, and the header's `handoff.hurl` pointer goes.
+Reword the "demo scene"/"hub" headers of the kept files (`smoke.hurl`,
+`input.hurl`, `display_input.hurl`) to the stub.
 
 The smoke-test bar: `GET /ui/controls` lists `main.quit` and `main.menu`, and
 `POST /ui/press {"id":"main.quit"}` terminates the process.
@@ -321,9 +348,15 @@ If the user chose to strip the dev lab: `scenes/devtools/` (its README too),
 `AgentRestServer.cs`, and `tests/hurl/devlab.hurl` / `devlab_absent.hurl`.
 Keep the rest of `scripts/devtools/`.
 
-Then fix every index that named a deleted file: `scenes/README.md`,
-`scripts/devtools/README.md`, `scripts/server/README.md` (its route sections
-and the shipped-users list), `CLAUDE.md` (5.9). Leave the placeholders
+Then fix every index that named a deleted file — Grep for `scripts/demo`,
+`scripts/test`, `/demo/state`, `HandoffState`, `demo_ping` and the dev lab's
+names rather than trusting this list: `scenes/README.md`, `scripts/README.md`,
+`scripts/ui/README.md` (`MainScreen`, `ConfirmDialog`, `FloatingLabel` rows),
+`scripts/devtools/README.md`, `scripts/server/README.md` (its route sections,
+the shipped-users list, and the `/nodes` and `/input/action` examples that use
+the Player and its actions), `scripts/core/loading/README.md` and
+`scripts/core/snapshots/README.md` (their shipped-user pointers), the
+`GameSession.cs` summary, `CLAUDE.md` (5.9). Leave the placeholders
 (*The template surface*) in place.
 
 ### 5.8 Rewrite `README.md`
