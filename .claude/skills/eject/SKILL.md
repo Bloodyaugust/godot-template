@@ -1,13 +1,16 @@
 ---
 name: eject
-description: Convert a fresh copy of the godot-template into a ready-to-go starter for a new Godot/C# game. Interviews the user about the game (name, pitch, genre, 2D/3D, core mechanics, key systems, architectural considerations), renames the project across .csproj / .sln / project.godot / RootNamespace, rewrites the root README.md to describe the new game (human-facing), seeds a "Game Overview" section in CLAUDE.md, strips the demo pieces (scripts/test/, the scene-handoff demo, optionally the dev lab) down to a minimal main-scene stub that keeps the chrome and the agent REST verification surface working, flags the placeholders a real game replaces, and removes itself. Use when the user invokes /eject from a freshly-copied template directory, or asks to "eject", "rename this template", or "scaffold the project for my new game".
+description: Convert a fresh copy of the godot-template into a ready-to-go starter for a new Godot/C# game. Re-initializes git (dropping the copied template history) with a single baseline commit, interviews the user about the game (name, pitch, genre, 2D/3D, core mechanics, key systems, architectural considerations), renames the project across .csproj / .sln / project.godot / RootNamespace, rewrites the root README.md to describe the new game (human-facing), seeds a "Game Overview" section in CLAUDE.md, strips the demo pieces (scripts/test/, the scene-handoff demo, optionally the dev lab) down to a minimal main-scene stub that keeps the chrome and the agent REST verification surface working, flags the placeholders a real game replaces, and removes itself. Use when the user invokes /eject from a freshly-copied template directory, or asks to "eject", "rename this template", or "scaffold the project for my new game".
 ---
 
 # Eject the template into a real project
 
 You are converting a freshly-copied checkout of the `godot-template` into a
-project-specific starter. The user has already cloned/copied the template into
-a new directory and is running `/eject` from inside it. By the end of this
+project-specific starter. The user has already copied the template directory
+recursively into a new directory — its `.git`, and with it the template's
+history and remote, included — and is running `/eject` from inside it. The
+skill first replaces that history with a fresh repository holding one
+baseline commit (Phase 1b). By the end of this
 skill the project must be renamed, the root `README.md` and `CLAUDE.md` must
 describe the user's game, the demo content must be replaced with a minimal
 stub that keeps the agent REST surface verifiable, the placeholders a real
@@ -92,16 +95,57 @@ message and stop if any check fails.
 1. **Looks like the template.** `project.godot` exists and contains
    `config/name="godot-template"`. `godot-template.csproj` and
    `godot-template.sln` exist. `scripts/server/AgentRestServer.cs` exists.
-2. **Not the template repo itself.** Run `git remote get-url origin` (if a
-   remote exists). If the URL points at the upstream `godot-template`
-   repository, refuse — ejecting the template itself would clobber it. If the
-   remote is ambiguous, show it to the user and ask whether to proceed.
-3. **Clean working tree.** `git status --porcelain` must be empty. Ask the
-   user to commit or stash first so the eject lands as its own reviewable
-   diff.
-4. **Not already ejected.** If `config/name` in `project.godot` is anything
+2. **Not the template checkout itself.** If the basename of `cwd` is
+   `godot-template`, refuse — that is the template's own checkout (or a copy
+   that never got a new name), and ejecting it in place would clobber it.
+   The origin remote is no signal here: a copied project carries the
+   template's `.git`, remote and all.
+3. **Not already ejected.** If `config/name` in `project.godot` is anything
    other than `"godot-template"`, abort with "looks like this project has
    already been ejected."
+4. **Classify the git state** (read-only; Phase 1b acts on it):
+   - **Copied template history** — the expected case. The project was made
+     by a recursive copy of the template directory, so `.git` is the
+     template's: `git remote get-url origin` points at the upstream
+     `godot-template` repository, or the log is the template's history.
+     The working tree may be dirty (whatever was uncommitted in the
+     template when it was copied); that's fine, it gets swept into the
+     baseline.
+   - **No repository** — no `.git` (copied without it, or from an archive).
+   - **Already the project's own repository** — a different origin, or a
+     history that is just this project's baseline commit. Skip Phase 1b;
+     `git status --porcelain` must be empty — ask the user to commit or
+     stash first so the eject lands as its own reviewable diff.
+   - **Anything else** — show the user the remote and the last few log
+     lines and ask which of the above it is.
+
+## Phase 1b — Re-initialize git with a baseline commit
+
+For the *copied template history* and *no repository* cases. The template's
+history doesn't belong to the new game, so replace it with a fresh repository
+whose single commit is the project exactly as copied — the eject's mutations
+then land on top of it as one reviewable diff.
+
+1. If a `.git` exists, record what was copied: `git describe --always --dirty`
+   (the template revision, `-dirty` if it carried uncommitted changes).
+2. Confirm via `AskUserQuestion`, showing `cwd`, the origin URL and that
+   revision: "This deletes the copied template history in `<cwd>/.git` and
+   starts a fresh repository with one baseline commit. Proceed?"
+3. Remove `<cwd>/.git` — that one path, nothing else.
+4. `git init -b main` (the project is trunk-based on `main`; see
+   `CLAUDE.md` *Version control*).
+5. `git add -A`, then commit with the message
+   `chore: baseline copy of godot-template @ <revision>` (drop the
+   `@ <revision>` part when there was no `.git`). `.gitignore` keeps
+   `.godot/`, `docs/`, `build/`, `tmp/` and the test project's output out of
+   it, but the copy can carry other strays: before committing, scan the
+   staged list (`git status --short`) for anything that isn't template
+   content (a root `bin/` or `obj/`, editor or OS files) and ask the user
+   whether to leave it out.
+6. Verify `git status --porcelain` is empty and `git log --oneline` shows
+   exactly the one commit, then continue to Phase 2.
+
+This baseline is the **only** commit the skill makes.
 
 ## Phase 2 — Resolve project identity
 
@@ -344,14 +388,15 @@ mutation, after every other change has been written to disk.
 2. `dotnet test tests/unit/<CHOSEN_NAMESPACE>.Tests.csproj` — must stay
    green (same stop rule).
 3. **Ask the user to open the project in the Godot editor once, and wait.**
-   A freshly cloned checkout has no `.godot/` import cache, and the editor is
-   what builds it (and the renamed C# assembly) on first open; until that has
-   happened, any `godot-mono --path .` boot — the Hurl wrapper's included —
-   errors out instead of starting the game, so the scenarios fail for a
-   reason that has nothing to do with the eject. Tell the user: open the
-   ejected project in the Godot editor, let the import finish, press the
-   Build (hammer) button, then confirm here. Do not continue until they
-   confirm; then check that `.godot/` now exists before booting anything.
+   A fresh copy has either no `.godot/` import cache or the template's,
+   which still names the old assembly; the editor is what (re)builds it and
+   the renamed C# assembly on first open. Until that has happened, any
+   `godot-mono --path .` boot — the Hurl wrapper's included — errors out
+   instead of starting the game, so the scenarios fail for a reason that has
+   nothing to do with the eject. Tell the user: open the ejected project in
+   the Godot editor, let the import finish, press the Build (hammer) button,
+   then confirm here. Do not continue until they confirm; then check that
+   `.godot/` exists before booting anything.
 4. Run the remaining Hurl files through the wrapper — `tests/hurl/run-tests.ps1`
    (or `run-tests.sh`) with no file list runs them all, each in a fresh
    headless instance, and guarantees teardown; `smoke.hurl` drives `/status`
@@ -370,24 +415,28 @@ mutation, after every other change has been written to disk.
 End with a short summary listing:
 
 - New project name and namespace.
+- The git baseline: re-initialized (with the template revision it was cut
+  from) or skipped as an existing project repository.
 - File renames / edits / deletes performed.
 - Build + REST verification results.
 - The placeholders left in place (*The template surface*), each with what
   replaces it.
-- Next steps for the user: review `git status` / `git diff`, populate
+- Next steps for the user: review `git status` / `git diff` (against the
+  baseline commit), add their own remote (`git remote add origin …`), populate
   `docs/` per `CLAUDE.md`, start the first system's design doc by copying
   `design/_system-template.md` to `design/game/<system>.md` (and create
   `design/game/README.md` with it), commit when satisfied.
 
-Do **not** commit the changes automatically — the user reviews and commits
+Do **not** commit the eject's changes — the user reviews and commits
 themselves.
 
 ## Constraints
 
-- **One reviewable commit's worth of changes.** Never commit.
-- **Confirm before each destructive batch.** Renames, the namespace rewrite,
-  and the self-delete each get a one-line "proceed?" checkpoint with
-  `AskUserQuestion`.
+- **One reviewable commit's worth of changes.** The Phase 1b baseline is the
+  only commit the skill makes; everything after it stays uncommitted.
+- **Confirm before each destructive batch.** The git re-init, the renames,
+  the namespace rewrite, and the self-delete each get a one-line "proceed?"
+  checkpoint with `AskUserQuestion`.
 - **Stop on first build failure.** Don't iterate on fixes inline.
 - **Do not touch** `docs/`, `.godot/`, `.idea/`, `bin/`, `obj/`, or any build
   output.

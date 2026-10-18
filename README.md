@@ -10,9 +10,9 @@ An opinionated Godot 4.7 Mono (C#) project template. Use as a starting point for
 
 ## Getting started
 
-1. Clone or copy this template into a new directory.
+1. Copy this template directory (recursively, `.git` included) into a new directory.
 2. Rename the project. Either:
-   - **Recommended (Claude Code):** run `/eject [project-name]` from inside the new directory. The skill interviews you about the game, renames `.csproj` / `.sln` / `project.godot` / `<RootNamespace>`, rewrites `README.md` and `CLAUDE.md` to describe your project, swaps the demo scene for a minimal stub, and removes itself. See `.claude/skills/eject/`.
+   - **Recommended (Claude Code):** run `/eject [project-name]` from inside the new directory. The skill replaces the copied template history with a fresh repository and a single baseline commit, interviews you about the game, renames `.csproj` / `.sln` / `project.godot` / `<RootNamespace>`, rewrites `README.md` and `CLAUDE.md` to describe your project, swaps the demo scene for a minimal stub, and removes itself. See `.claude/skills/eject/`.
    - **Manual:** find-replace every instance of `godot-template` with your project name across `godot-template.csproj` (rename + `<RootNamespace>`), `godot-template.sln` (rename), and `project.godot` (`config/name`, `project/assembly_name`).
 3. Open the project in Godot.
 4. Build the dotnet project from inside Godot (top-right hammer, left of the Play button) to populate `.godot/` and verify the toolchain is wired up.
